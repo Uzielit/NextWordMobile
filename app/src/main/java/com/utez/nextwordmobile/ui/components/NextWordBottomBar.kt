@@ -1,8 +1,6 @@
 package com.utez.nextwordmobile.ui.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -11,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -28,46 +27,49 @@ fun NextWordBottomBar(navController: NavController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp)),
-        shape = RoundedCornerShape(24.dp),
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 20.dp)
+            .shadow(elevation = 12.dp, shape = RoundedCornerShape(24.dp)),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         NavigationBar(
             containerColor = Color.White,
-            contentColor = PrimaryDark,
             tonalElevation = 0.dp,
+            windowInsets = NavigationBarDefaults.windowInsets,
             modifier = Modifier.height(70.dp)
         ) {
             items.forEach { item ->
                 val isSelected = currentRoute == item.route
                 NavigationBarItem(
+
                     icon = {
                         Icon(
                             imageVector = item.icon,
                             contentDescription = item.title,
-                            tint = if (isSelected) PrimaryDark else Color.Gray
+                            modifier = Modifier.padding(top = 8.dp),
+                            tint = if (isSelected) PrimaryDark else Color(0xFF999999)
                         )
                     },
+
                     label = {
                         Text(
                             text = item.title,
-                            color = if (isSelected) PrimaryDark else Color.Gray
+                            fontSize = 10.sp,
+                            color = if (isSelected) PrimaryDark else Color(0xFF999999)
                         )
                     },
+                    alwaysShowLabel = true,
                     selected = isSelected,
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.Transparent
                     ),
                     onClick = {
                         navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }

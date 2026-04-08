@@ -39,7 +39,9 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 import android.util.Patterns
+import com.utez.nextwordmobile.data.remote.SessionManager
 import kotlinx.coroutines.CoroutineScope
+import java.util.TimeZone
 
 
 
@@ -141,6 +143,9 @@ fun LoginSection(
     var errorMail by remember { mutableStateOf<String?>(null) }
     var errorPassword by remember { mutableStateOf<String?>(null) }
 
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+
     Column {
         NextWordTextField(
             value = loginEmail,
@@ -205,7 +210,8 @@ fun LoginSection(
                 viewModel.login(
                     email = loginEmail,
                     password = loginPassword,
-                    onSuccess = { token -> onNavigateToHome() },
+                    onSuccess = { token -> sessionManager.saveAuthToken(token)
+                        onNavigateToHome()},
                     onError = { errorMensaje ->
                         scope.launch { snackbarHostState.showSnackbar(errorMensaje) }
                     }
@@ -312,6 +318,7 @@ fun RegisterSection(
                     TextButton(onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
                             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            sdf.timeZone = TimeZone.getTimeZone("UTC")
                             registerDob = sdf.format(Date(millis))
                             DobError = null
                         }
