@@ -8,12 +8,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -25,14 +29,22 @@ import com.utez.nextwordmobile.data.repository.MessagingRepository
 import com.utez.nextwordmobile.ui.components.BottomNavItem
 import com.utez.nextwordmobile.ui.components.NextWordBottomBar
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewModel
 
 @Composable
 fun StudentDashboardScreen(
     onNavigateToCalendar: (String, String, String) -> Unit,
-    onNavigateToChat: (String, String) -> Unit) {
+    onNavigateToChat: (String, String, String) -> Unit) {
 
     val bottomNavController = rememberNavController()
     val context = LocalContext.current
+
+    val profileViewModel: StudentProfileViewModel = viewModel()
+    val studentProfile by profileViewModel.studentProfile.collectAsState()
+
+    LaunchedEffect(Unit) {
+        profileViewModel.fetchMyProfile(context)
+    }
 
     MaterialTheme(colorScheme = lightColorScheme()) {
         Scaffold(
@@ -84,22 +96,24 @@ fun StudentDashboardScreen(
                 // 4. Pestaña MENSAJES
 
                 composable(BottomNavItem.Mensajes.route) {
-
-                    // Creamos el ViewModel del Inbox
                     val factory = object : ViewModelProvider.Factory {
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            val api = RetrofitClient.getAuthenticatedClient(context).create(
-                                MessagingApiService::class.java)
+                            val api = RetrofitClient.getAuthenticatedClient(context).create(MessagingApiService::class.java)
                             val repo = MessagingRepository(api)
                             return InboxViewModel(repo) as T
                         }
                     }
                     val inboxViewModel: InboxViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
 
+
                     StudentMessageScreen(
                         paddingValues = paddingValues,
                         viewModel = inboxViewModel,
-                        onNavigateToChat = onNavigateToChat
+                        onNavigateToChat = { contactId, contactName ->
+                            // Atrapamos el ID real y lo pasamos a la navegación
+                            val myIdReal = studentProfile?.id ?: ""
+                            onNavigateToChat(contactId, contactName, myIdReal)
+                        }
                     )
                 }
 

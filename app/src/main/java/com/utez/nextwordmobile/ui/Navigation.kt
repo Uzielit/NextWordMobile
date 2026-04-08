@@ -11,9 +11,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.utez.nextwordmobile.data.remote.RetrofitClient
 import com.utez.nextwordmobile.data.remote.api.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
@@ -23,9 +26,11 @@ import com.utez.nextwordmobile.ui.screens.AuthScreen
 import com.utez.nextwordmobile.ui.screens.ForgotPasswordScreen
 import com.utez.nextwordmobile.ui.screens.ResetPasswordScreen
 import com.utez.nextwordmobile.ui.screens.VerificationMailScreen
+import com.utez.nextwordmobile.ui.screens.student.StudentChatScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentDashboardScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentMessageScreen
 import com.utez.nextwordmobile.ui.screens.student.TeacherCalendarScreen
+import com.utez.nextwordmobile.viewModel.studentViewModel.ChatDetailViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.StudenReservationViewModel
 
@@ -56,9 +61,9 @@ sealed class AppScreens(val route: String) {
 
     object Inbox : AppScreens("inbox")
 
-    object ChatDetail : AppScreens("chat_detail/{contactId}/{contactName}") {
-        fun createRoute(contactId: String, contactName: String): String {
-            return "chat_detail/$contactId/${android.net.Uri.encode(contactName)}"
+    object ChatDetail : AppScreens("chat_detail/{contactId}/{contactName}/{myId}") {
+        fun createRoute(contactId: String, contactName: String, myId: String): String {
+            return "chat_detail/$contactId/${android.net.Uri.encode(contactName)}/$myId"
         }
     }
 
@@ -138,8 +143,8 @@ fun AppNavigation() {
                 onNavigateToCalendar = { teacherId, teacherName, studentId ->
                     navController.navigate(AppScreens.TeacherCalendar.createRoute(teacherId, teacherName, studentId))
                 },
-                        onNavigateToChat = { contactId, contactName ->
-                    navController.navigate(AppScreens.ChatDetail.createRoute(contactId, contactName))
+                onNavigateToChat = { contactId, contactName, myId ->
+                    navController.navigate(AppScreens.ChatDetail.createRoute(contactId, contactName, myId))
                 }
             )
         }
@@ -188,16 +193,36 @@ fun AppNavigation() {
         composable(
             route = AppScreens.ChatDetail.route,
             arguments = listOf(
-                androidx.navigation.navArgument("contactId") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("contactName") { type = androidx.navigation.NavType.StringType }
+                navArgument("contactId") { type = NavType.StringType },
+                navArgument("contactName") { type = NavType.StringType },
+                navArgument("myId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val contactId = backStackEntry.arguments?.getString("contactId") ?: ""
             val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
+            val myId = backStackEntry.arguments?.getString("myId") ?: ""
 
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Chat con $contactName\nID: $contactId\n(Pantalla de Chat en construcción 🚧)")
+
+            val context = LocalContext.current
+
+            val factory = object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    val api = RetrofitClient.getAuthenticatedClient(context).create(MessagingApiService::class.java)
+                    val repo = MessagingRepository(api)
+                    // 🌟 Pasamos el myId real al ViewModel
+                    return ChatDetailViewModel(repo, myId, contactId) as T
+                }
             }
+            val chatViewModel: ChatDetailViewModel = viewModel(factory = factory)
+
+            StudentChatScreen (
+                contactName = contactName,
+                myId = myId,
+                viewModel = chatViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
 

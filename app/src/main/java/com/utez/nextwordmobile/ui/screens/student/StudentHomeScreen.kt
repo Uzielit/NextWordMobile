@@ -254,7 +254,7 @@ fun StudentHomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 🌟 5. PROFESORES RECOMENDADOS
+        //  5. PROFESORES RECOMENDADOS
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -301,6 +301,13 @@ fun StudentHomeScreen(
                 showTeacherProfile = false
                 onNavigateToCalendar(tId, tName, sId)
             }
+        )
+    }
+
+    if (showReservationDetails && nextClass != null) {
+        ReservationDetailBottomSheet(
+            reservation = nextClass,
+            onDismiss = { showReservationDetails = false }
         )
     }
 }

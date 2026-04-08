@@ -49,6 +49,12 @@ dependencies {
     implementation(libs.converter.gson)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // Librerías para WebSockets STOMP (Krossbow)
+    implementation("org.hildan.krossbow:krossbow-stomp-core:7.1.0")
+    implementation("org.hildan.krossbow:krossbow-websocket-okhttp:7.1.0")
+
+    // Gson para convertir JSON fácil
+    implementation("com.google.code.gson:gson:2.10.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -58,6 +64,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
