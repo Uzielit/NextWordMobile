@@ -1,20 +1,50 @@
 package com.utez.nextwordmobile.ui
 
+import android.R.attr.type
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.utez.nextwordmobile.data.remote.RetrofitClient
+import com.utez.nextwordmobile.data.remote.api.ReservationApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.StudentApiService
+import com.utez.nextwordmobile.data.repository.MessagingRepository
+import com.utez.nextwordmobile.data.repository.ReservationRepository
+import com.utez.nextwordmobile.data.repository.StudentProfileRepository
 import com.utez.nextwordmobile.ui.screens.AuthScreen
 import com.utez.nextwordmobile.ui.screens.ForgotPasswordScreen
 import com.utez.nextwordmobile.ui.screens.ResetPasswordScreen
 import com.utez.nextwordmobile.ui.screens.VerificationMailScreen
+import com.utez.nextwordmobile.ui.screens.student.StudentChatScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentDashboardScreen
+import com.utez.nextwordmobile.ui.screens.student.StudentMessageScreen
+import com.utez.nextwordmobile.ui.screens.student.TeacherCalendarScreen
+import com.utez.nextwordmobile.viewModel.studentViewModel.ChatDetailViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudenReservationViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentUpdateProfileViewModel
 
 
 sealed class AppScreens(val route: String) {
     object Auth : AppScreens("auth")
-    object Home : AppScreens("home")
+
 
 
     // ruta con parametro para correo
@@ -30,6 +60,21 @@ sealed class AppScreens(val route: String) {
 
     //Rutas de estudiantes
     object StudentDashboard : AppScreens("student_dashboard")
+    object TeacherCalendar : AppScreens("teacher_calendar/{teacherId}/{teacherName}/{studentId}") {
+        fun createRoute(teacherId: String, teacherName: String, studentId: String): String {
+            return "teacher_calendar/$teacherId/${android.net.Uri.encode(teacherName)}/$studentId"
+        }
+    }
+
+    object StudentProfileUpdate : AppScreens("student_profile_update")
+
+    object ChatDetail : AppScreens("chat_detail/{contactId}/{contactName}/{myId}") {
+        fun createRoute(contactId: String, contactName: String, myId: String): String {
+            return "chat_detail/$contactId/${android.net.Uri.encode(contactName)}/$myId"
+        }
+    }
+
+    object StudentProfile : AppScreens("student_profile")
 
 }
 
@@ -42,11 +87,9 @@ fun AppNavigation() {
         startDestination = AppScreens.Auth.route
     ) {
 
-        // 1. PANTALLA DE LOGIN Y REGISTRO
         composable(AppScreens.Auth.route) {
             AuthScreen(
                 onNavigateToHome = {
-                    // 🌟 1. AL INICIAR SESIÓN, LO MANDAMOS AL DASHBOARD
                     navController.navigate(AppScreens.StudentDashboard.route) {
                         popUpTo(AppScreens.Auth.route) { inclusive = true }
                     }
@@ -60,7 +103,6 @@ fun AppNavigation() {
             )
         }
 
-        // 2. PANTALLA VERIFICACIÓN OTP
         composable(AppScreens.Verification.route) { backStackEntry ->
             val email = backStackEntry.arguments?.getString("email") ?: ""
 
@@ -70,7 +112,7 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onVerifySuccess = {
-                    // 🌟 2. SI VERIFICA SU CUENTA CON ÉXITO, TAMBIÉN AL DASHBOARD
+
                     navController.navigate(AppScreens.StudentDashboard.route) {
                         popUpTo(AppScreens.Auth.route) { inclusive = true }
                     }
@@ -78,7 +120,6 @@ fun AppNavigation() {
             )
         }
 
-        // 3. PANTALLA DE PEDIR CORREO PARA RECUPERAR
         composable(AppScreens.ForgotPassword.route) {
             ForgotPasswordScreen(
                 onNavigateBack = {
@@ -106,11 +147,110 @@ fun AppNavigation() {
                 }
             )
         }
-
-        // 🌟 5. EL NUEVO CONTENEDOR DEL ESTUDIANTE
         composable(AppScreens.StudentDashboard.route) {
+            val context = LocalContext.current
+            StudentDashboardScreen(
+                onNavigateToCalendar = { teacherId, teacherName, studentId ->
+                    navController.navigate(AppScreens.TeacherCalendar.createRoute(teacherId, teacherName, studentId))
+                },
+                onNavigateToChat = { contactId, contactName, myId ->
+                    navController.navigate(AppScreens.ChatDetail.createRoute(contactId, contactName, myId))
+                },
+                onLogout = { // 🌟 LA LÓGICA DE CERRAR SESIÓN
+                    // Borramos el Token del celular
+                    val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
+                    prefs.edit().remove("JWT_TOKEN").apply()
 
-            StudentDashboardScreen()
+                    // Lo mandamos al Login sin que pueda regresar
+                    navController.navigate(AppScreens.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
+
+        composable(
+            route = AppScreens.TeacherCalendar.route,
+            arguments = listOf(
+                navArgument("teacherId") { type = NavType.StringType },
+                navArgument("teacherName") { type =NavType.StringType },
+                navArgument("studentId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            // 1. Extraemos los datos de la ruta
+            val teacherId = backStackEntry.arguments?.getString("teacherId") ?: ""
+            val teacherName = backStackEntry.arguments?.getString("teacherName") ?: ""
+            val studentId = backStackEntry.arguments?.getString("studentId") ?: ""
+
+            val context = LocalContext.current
+            val factory = object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    val api = RetrofitClient.getAuthenticatedClient(context).create(
+                        ReservationApiService::class.java)
+                    val repo = ReservationRepository(api)
+                    return StudenReservationViewModel(repo) as T
+                }
+            }
+            val reservationViewModel: StudenReservationViewModel =
+                viewModel(factory = factory)
+
+            TeacherCalendarScreen(
+                teacherId = teacherId,
+                teacherName = teacherName,
+                studentId = studentId,
+                viewModel = reservationViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onReservationSuccess = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = AppScreens.ChatDetail.route,
+            arguments = listOf(
+                navArgument("contactId") { type = NavType.StringType },
+                navArgument("contactName") { type = NavType.StringType },
+                navArgument("myId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString("contactId") ?: ""
+            val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
+            val myId = backStackEntry.arguments?.getString("myId") ?: ""
+
+
+            val context = LocalContext.current
+
+            val factory = object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    val api = RetrofitClient.getAuthenticatedClient(context).create(MessagingApiService::class.java)
+                    val repo = MessagingRepository(api)
+                    //Pasamos el myId real al ViewModel
+                    return ChatDetailViewModel(repo, myId, contactId) as T
+                }
+            }
+            val chatViewModel: ChatDetailViewModel = viewModel(factory = factory)
+
+            StudentChatScreen (
+                contactName = contactName,
+                myId = myId,
+                viewModel = chatViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+
+
+
+
+
+
+
     }
+
+
 }

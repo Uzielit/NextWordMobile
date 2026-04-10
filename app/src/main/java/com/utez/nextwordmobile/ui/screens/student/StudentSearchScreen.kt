@@ -11,23 +11,56 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.utez.nextwordmobile.ui.theme.NextWordGradient
 import com.utez.nextwordmobile.ui.theme.PrimaryDark
 
+import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.utez.nextwordmobile.R
+import com.utez.nextwordmobile.data.remote.dto.teacherDto.TeacherDto
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StudentSearchScreen() {
+fun StudentSearchScreen(
+    paddingValues: PaddingValues,
+    onNavigateToCalendar: (String, String, String) -> Unit,
+    viewModel: StudentProfileViewModel = viewModel()
+
+) {
+    val context = LocalContext.current
+
+    val studentProfile by viewModel.studentProfile.collectAsState()
+    val teachers by viewModel.teachersList.collectAsState()
+
     var searchQuery by remember { mutableStateOf("") }
 
+    // Estados para saber a qué profe tocaste
+    var selectedTeacher by remember { mutableStateOf<TeacherDto?>(null) }
 
+    var selectedTeacherId by remember { mutableStateOf("") }
+    var selectedTeacherName by remember { mutableStateOf("") }
     var showTeacherDetails by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.fetchTeachers(context)
+        viewModel.fetchMyProfile(context)
+    }
+
+
+    val filteredTeachers = teachers.filter {
+        it.fullName.contains(searchQuery, ignoreCase = true) ||
+                (it.specialization?.contains(searchQuery, ignoreCase = true) == true)
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))) {
-
-
         Column {
             Box(
                 modifier = Modifier
@@ -35,10 +68,12 @@ fun StudentSearchScreen() {
                     .background(NextWordGradient)
                     .padding(top = 40.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
             ) {
-                Column {
-                    Text("Next Word", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    Text("Panel de Estudiante", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.nexwordlogo),
+                    contentDescription = "Logo",
+                    modifier = Modifier.height(40.dp).width(140.dp),
+                    contentScale = ContentScale.Fit
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -46,7 +81,7 @@ fun StudentSearchScreen() {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Buscar profesores") },
+                placeholder = { Text("Buscar por nombre o especialidad...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -54,44 +89,65 @@ fun StudentSearchScreen() {
                     focusedContainerColor = Color.White,
                     unfocusedBorderColor = Color.LightGray
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. LISTA DE PROFESORES
+            // 2. LISTA DINÁMICA DE PROFESORES
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(3) {
-                    TeacherCard(
-                        onVerHorariosClick = {
-
-                            showTeacherDetails = true
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                if (filteredTeachers.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No se encontraron profesores.",
+                            color = Color.Gray,
+                            modifier = Modifier.padding(24.dp)
+                        )
+                    }
+                } else {
+                    items(filteredTeachers.size) { index ->
+                        val teacher = filteredTeachers[index]
+                        TeacherCard(
+                            teacher = teacher,
+                            onVerHorariosClick = {
+                                // 🌟 AQUÍ ESTABA EL ERROR: Faltaba guardar el objeto
+                                selectedTeacher = teacher
+                                showTeacherDetails = true
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
 
 
-        if (showTeacherDetails) {
-            TeacherDetailBottomSheet(
-                onDismiss = { showTeacherDetails = false }
-            )
-        }
+        // 3. LLAMAMOS AL BOTTOM SHEET UNIFICADO
+    if (showTeacherDetails && selectedTeacher != null) {
+        TeacherDetailBottomSheet(
+            teacher = selectedTeacher!!,
+            // OTRO SEGURO: Si el perfil tarda en cargar, mandamos "SIN_ID" en lugar de "" para que no explote la navegación
+            studentId = studentProfile?.id?.takeIf { it.isNotBlank() } ?: "SIN_ID",
+            onDismiss = { showTeacherDetails = false },
+            onNavigateToCalendar = { tId, tName, sId ->
+                showTeacherDetails = false
+                onNavigateToCalendar(tId, tName, sId)
+            }
+        )
     }
+}
 }
 
 @Composable
-fun TeacherCard(onVerHorariosClick: () -> Unit) {
+fun TeacherCard(teacher: TeacherDto, onVerHorariosClick: () -> Unit) {
+
+    val parts = teacher.fullName.split(" ")
+    val initials = if (parts.size > 1) "${parts[0].take(1)}${parts[1].take(1)}" else parts[0].take(2)
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -104,21 +160,22 @@ fun TeacherCard(onVerHorariosClick: () -> Unit) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .background(Color(0xFFE3E8FA), RoundedCornerShape(12.dp)),
+                        modifier = Modifier.size(60.dp).background(Color(0xFFE3E8FA), RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("JP", color = PrimaryDark, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(initials.uppercase(), color = PrimaryDark, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Inglés", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Text("Juan Pérez", fontSize = 14.sp, color = Color.DarkGray)
-                        Text("45 clases", fontSize = 12.sp, color = Color.Gray)
+                        Text(teacher.specialization ?: "Inglés", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(teacher.fullName, fontSize = 14.sp, color = Color.DarkGray)
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB400), modifier = Modifier.size(14.dp))
+                            Text(" ${teacher.averageRating}", fontSize = 12.sp, color = Color.Gray)
+                        }
                     }
                 }
-
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text("50", fontSize = 24.sp, fontWeight = FontWeight.Bold)
@@ -126,8 +183,6 @@ fun TeacherCard(onVerHorariosClick: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("Profesor con 10 años de experiencia", fontSize = 14.sp, color = Color.DarkGray)
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
@@ -141,88 +196,7 @@ fun TeacherCard(onVerHorariosClick: () -> Unit) {
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TeacherDetailBottomSheet(onDismiss: () -> Unit) {
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.White,
-        dragHandle = { BottomSheetDefaults.DragHandle() } 
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-        ) {
-            // Cabecera del Bottom Sheet
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .background(Color(0xFFE3E8FA), RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("JP", color = PrimaryDark, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text("Inglés", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    Text("Juan Pérez", fontSize = 14.sp, color = Color.DarkGray)
-                    Text("45 clases", fontSize = 12.sp, color = Color.Gray)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Etiquetas de Info
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                InfoTag("45", "Clases dadas", Modifier.weight(1f))
-                InfoTag("50", "Créditos / clase", Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text("Sobre mí", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "Lingüista con doctorado y 10 años transformando el aprendizaje del idioma. Mi pasión es derribar las barreras de comunicación.",
-                fontSize = 14.sp, color = Color.DarkGray
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 🌟 APLICAMOS TU REVISIÓN: Certificaciones en lugar de Educación
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Certificaciones", fontSize = 12.sp, color = Color.Gray)
-                    Text("Doctorado en Lingüística Aplicada", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Experiencia", fontSize = 12.sp, color = Color.Gray)
-                    Text("10 años de experiencia", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { /* TODO: Pasar al calendario */ },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B5998)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Continuar a Reservar", color = Color.White)
-            }
-        }
-    }
-}
 
 @Composable
 fun InfoTag(value: String, label: String, modifier: Modifier = Modifier) {
