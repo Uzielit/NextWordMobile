@@ -35,6 +35,7 @@ import com.utez.nextwordmobile.ui.screens.student.StudentChatScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentDashboardScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentMessageScreen
 import com.utez.nextwordmobile.ui.screens.student.TeacherCalendarScreen
+import com.utez.nextwordmobile.ui.screens.teacher.TeacherDashboardScreen
 import com.utez.nextwordmobile.viewModel.studentViewModel.ChatDetailViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.StudenReservationViewModel
@@ -43,10 +44,9 @@ import com.utez.nextwordmobile.viewModel.studentViewModel.StudentUpdateProfileVi
 
 
 sealed class AppScreens(val route: String) {
+    //-----------
+    //Rutas para Auth
     object Auth : AppScreens("auth")
-
-
-
     // ruta con parametro para correo
     object Verification : AppScreens("verification/{email}") {
         fun createRoute(email: String) = "verification/$email"
@@ -58,6 +58,7 @@ sealed class AppScreens(val route: String) {
         fun createRoute(email: String) = "reset_password/$email"
     }
 
+    //-----------
     //Rutas de estudiantes
     object StudentDashboard : AppScreens("student_dashboard")
     object TeacherCalendar : AppScreens("teacher_calendar/{teacherId}/{teacherName}/{studentId}") {
@@ -65,16 +66,17 @@ sealed class AppScreens(val route: String) {
             return "teacher_calendar/$teacherId/${android.net.Uri.encode(teacherName)}/$studentId"
         }
     }
-
-    object StudentProfileUpdate : AppScreens("student_profile_update")
-
     object ChatDetail : AppScreens("chat_detail/{contactId}/{contactName}/{myId}") {
         fun createRoute(contactId: String, contactName: String, myId: String): String {
             return "chat_detail/$contactId/${android.net.Uri.encode(contactName)}/$myId"
         }
     }
 
-    object StudentProfile : AppScreens("student_profile")
+    //-----------
+    //Rutas de profesores
+    object TeacherDashboard : AppScreens("teacher_dashboard")
+
+
 
 }
 
@@ -90,9 +92,26 @@ fun AppNavigation() {
         composable(AppScreens.Auth.route) {
             AuthScreen(
                 onNavigateToHome = {
-                    navController.navigate(AppScreens.StudentDashboard.route) {
-                        popUpTo(AppScreens.Auth.route) { inclusive = true }
+                    roleId ->
+                    when (roleId){
+                        1->{
+                            navController.navigate(AppScreens.StudentDashboard.route) {
+                                popUpTo(AppScreens.Auth.route) { inclusive = true }
+                            }
+
+                        }
+                        2->{
+                            navController.navigate(AppScreens.TeacherDashboard.route){
+                                popUpTo(AppScreens.Auth.route) { inclusive = true }
+                            }
+
+                        }
+                        3->{
+
+                        }
+
                     }
+
                 },
                 onNavigateToVerification = { emailRegistrado ->
                     navController.navigate(AppScreens.Verification.createRoute(emailRegistrado))
@@ -239,6 +258,23 @@ fun AppNavigation() {
                 viewModel = chatViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+
+        composable(AppScreens.TeacherDashboard.route) {
+            val context = LocalContext.current
+
+            TeacherDashboardScreen(
+                onLogout = {
+                    // Lógica para cerrar sesión (idéntica a la del estudiante)
+                    val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
+                    prefs.edit().remove("JWT_TOKEN").apply()
+
+                    navController.navigate(AppScreens.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

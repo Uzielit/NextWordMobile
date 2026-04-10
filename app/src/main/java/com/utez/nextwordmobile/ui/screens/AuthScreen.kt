@@ -51,7 +51,7 @@ import java.util.TimeZone
 @Composable
 fun AuthScreen(
     viewModel: AuthViewModel = viewModel(),
-    onNavigateToHome: () -> Unit = {},
+    onNavigateToHome: (Int) -> Unit = {},
     onNavigateToVerification: (String) -> Unit = {},
     onNavigateToForgotPassword: () -> Unit = {}
 ) {
@@ -132,7 +132,7 @@ fun AuthScreen(
 @Composable
 fun LoginSection(
     viewModel: AuthViewModel,
-    onNavigateToHome: () -> Unit,
+    onNavigateToHome: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
     onNavigateToForgotPassword: () -> Unit
@@ -210,8 +210,9 @@ fun LoginSection(
                 viewModel.login(
                     email = loginEmail,
                     password = loginPassword,
-                    onSuccess = { token -> sessionManager.saveAuthToken(token)
-                        onNavigateToHome()},
+                    onSuccess = { token, roleId ->
+                        sessionManager.saveAuthToken(token)
+                        onNavigateToHome(roleId)},
                     onError = { errorMensaje ->
                         scope.launch { snackbarHostState.showSnackbar(errorMensaje) }
                     }

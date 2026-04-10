@@ -1,24 +1,18 @@
 package com.utez.nextwordmobile.ui.screens.student
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,9 +22,8 @@ import com.utez.nextwordmobile.data.remote.api.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
 import com.utez.nextwordmobile.data.repository.MessagingRepository
 import com.utez.nextwordmobile.data.repository.ReservationRepository
-import com.utez.nextwordmobile.ui.AppScreens
 import com.utez.nextwordmobile.ui.components.BottomNavItem
-import com.utez.nextwordmobile.ui.components.NextWordBottomBar
+import com.utez.nextwordmobile.ui.components.NextWordStudentBottomBar
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.StudentClassesViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewModel
@@ -53,7 +46,7 @@ fun StudentDashboardScreen(
 
     MaterialTheme(colorScheme = lightColorScheme()) {
         Scaffold(
-            bottomBar = { NextWordBottomBar(navController = bottomNavController) },
+            bottomBar = { NextWordStudentBottomBar(navController = bottomNavController) },
             containerColor = Color(0xFFF5F5F5)
         ) { paddingValues ->
 

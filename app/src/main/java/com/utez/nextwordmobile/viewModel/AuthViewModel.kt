@@ -34,7 +34,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun login(email: String, password: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+    fun login(email: String, password: String, onSuccess: (String, Int) -> Unit, onError: (String) -> Unit) {
         val request = LoginRequestDto(email, password)
 
         viewModelScope.launch {
@@ -42,7 +42,8 @@ class AuthViewModel : ViewModel() {
                 val response = repository.login(request)
                 if (response.isSuccessful) {
                     val token = response.body()?.token ?: ""
-                    withContext(Dispatchers.Main) { onSuccess(token) }
+                    val roleId = response.body()?.roleId ?: -1
+                    withContext(Dispatchers.Main) { onSuccess(token, roleId) }
                 } else {
                     val errorLimpio = extractErrorMessage(response.errorBody()?.string(), "Credenciales incorrectas")
                     withContext(Dispatchers.Main) { onError(errorLimpio) }

@@ -51,7 +51,6 @@ fun StudentMessageScreen(
             .background(Color(0xFFF5F5F5))
             .padding(bottom = paddingValues.calculateBottomPadding())
     ) {
-        // 🌟 1. EL HEADER AZUL CON EL LOGO A LA IZQUIERDA
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,7 +62,7 @@ fun StudentMessageScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.CenterStart), // Logo centrado a la izquierda
+                    .align(Alignment.CenterStart),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
@@ -82,13 +81,11 @@ fun StudentMessageScreen(
             }
         }
 
-        // 🌟 2. LA BANDEJA DE ENTRADA
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = PrimaryDark)
             }
         } else if (inboxList.isEmpty()) {
-            // Diseño de estado vacío si no hay mensajes
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -100,7 +97,6 @@ fun StudentMessageScreen(
                 Text("Tus chats aparecerán aquí.", fontSize = 14.sp, color = Color.LightGray)
             }
         } else {
-            // Lista de chats al estilo WhatsApp
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
@@ -120,7 +116,6 @@ fun StudentMessageScreen(
     }
 }
 
-// 🌟 COMPONENTE INDIVIDUAL DEL CHAT (La fila)
 @Composable
 fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
     Row(
@@ -130,7 +125,7 @@ fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar (Por si no hay foto, ponemos sus iniciales)
+
         val initials = chat.name.split(" ").let { parts ->
             if (parts.size > 1) "${parts[0].take(1)}${parts[1].take(1)}" else parts[0].take(2)
         }
@@ -147,7 +142,6 @@ fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Textos del Chat
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -164,23 +158,22 @@ fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
 
-                // Formateo simple de hora (Simulado si el string es muy largo)
+
                 Text(
-                    text = chat.dateLastMessage.take(10), // Tomamos solo la fecha por ahora para no complicar el formateo
+                    text = chat.dateLastMessage.take(10),
                     fontSize = 12.sp,
-                    color = if (chat.unreadCount > 0) Color(0xFF25D366) else Color.Gray // Verde si hay no leídos
+                    color = if (chat.unreadCount > 0) Color(0xFF25D366) else Color.Gray
                 )
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Las palomitas si yo lo envié
                 if (chat.sentByMe) {
                     Icon(
                         imageVector = Icons.Default.DoneAll,
                         contentDescription = "Enviado",
-                        tint = Color(0xFF34B7F1), // Azul WhatsApp
+                        tint = Color(0xFF34B7F1),
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -195,7 +188,6 @@ fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
 
-                // Circulito de mensajes no leídos
                 if (chat.unreadCount > 0) {
                     Box(
                         modifier = Modifier
