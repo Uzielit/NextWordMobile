@@ -36,3 +36,14 @@ data class ReservationResponseDto(
     val status: String,
     val meetLink: String?
 )
+
+
+data class StudentUpdateDto(
+    val fullName: String?,
+    val phoneNumber: String?,
+    val profilePicture: String?,
+    val newPassword: String?,
+    val tutorName: String?,
+    val tutorPhone: String?,
+    val tutorEmail: String?
+)

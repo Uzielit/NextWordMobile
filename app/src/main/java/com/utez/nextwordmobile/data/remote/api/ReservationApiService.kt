@@ -20,13 +20,16 @@ interface ReservationApiService {
         @Body request: ReservationDto
     ): Response<String>
 
-    // 🌟 1. ENDPOINT DE PRÓXIMAS CLASES (AGENDA)
+    // ENDPOINT DE PRÓXIMAS CLASES
     @GET("api/reservations/myAgenda")
     suspend fun getStudentAgenda(): Response<List<ReservationResponseDto>>
 
-    // 🌟 2. ENDPOINT DE HISTORIAL DE CLASES
+    //  ENDPOINT DE HISTORIAL DE CLASES
     @GET("api/reservations/myClass")
     suspend fun getStudentHistory(
         @Query("status") status: String? = null
     ): Response<List<ReservationResponseDto>>
+
+
+
 }

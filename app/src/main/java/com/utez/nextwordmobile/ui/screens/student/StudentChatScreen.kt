@@ -1,5 +1,7 @@
 package com.utez.nextwordmobile.ui.screens.student
 
+import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,6 +53,11 @@ import com.utez.nextwordmobile.data.remote.dto.studentDto.messagingDto.MessageDt
 import com.utez.nextwordmobile.ui.theme.PrimaryDark
 import com.utez.nextwordmobile.viewModel.studentViewModel.ChatDetailViewModel
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +73,19 @@ fun StudentChatScreen(
     // Datos del servidor
     val messages by viewModel.messages.collectAsState()
 
+
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val activity = context as? Activity
+        val originalMode = activity?.window?.attributes?.softInputMode ?: WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED
+
+        activity?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
+        onDispose {
+            activity?.window?.setSoftInputMode(originalMode)
+        }
+    }
+
     // Auto-scroll al último mensaje cuando llega uno nuevo
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -73,6 +94,7 @@ fun StudentChatScreen(
     }
 
     Scaffold(
+        modifier = Modifier.imePadding(),
         topBar = {
             TopAppBar(
                 title = {
@@ -156,7 +178,7 @@ fun MessageBubble(message: MessageDto, isMine: Boolean) {
             Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                 Text(text = message.body, fontSize = 16.sp, color = Color.Black)
                 Row(modifier = Modifier.align(Alignment.End).padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    val timeString = try { message.sentAt.substring(11, 16) } catch (e: Exception) { "" }
+                    val timeString = formatChatTime(message.sentAt)
                     Text(text = timeString, fontSize = 10.sp, color = Color.Gray)
 
                     if (isMine) {
@@ -171,5 +193,15 @@ fun MessageBubble(message: MessageDto, isMine: Boolean) {
                 }
             }
         }
+    }
+}
+
+fun formatChatTime(isoString: String): String {
+    return try {
+        val zdt = ZonedDateTime.parse(isoString)
+        val formatter = DateTimeFormatter.ofPattern("hh:mm a", Locale("es", "MX"))
+        zdt.format(formatter).uppercase()
+    } catch (e: Exception) {
+        ""
     }
 }

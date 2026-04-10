@@ -1,10 +1,13 @@
 package com.utez.nextwordmobile.ui
 
+import android.R.attr.type
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,8 +23,10 @@ import androidx.navigation.navArgument
 import com.utez.nextwordmobile.data.remote.RetrofitClient
 import com.utez.nextwordmobile.data.remote.api.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.StudentApiService
 import com.utez.nextwordmobile.data.repository.MessagingRepository
 import com.utez.nextwordmobile.data.repository.ReservationRepository
+import com.utez.nextwordmobile.data.repository.StudentProfileRepository
 import com.utez.nextwordmobile.ui.screens.AuthScreen
 import com.utez.nextwordmobile.ui.screens.ForgotPasswordScreen
 import com.utez.nextwordmobile.ui.screens.ResetPasswordScreen
@@ -33,6 +38,8 @@ import com.utez.nextwordmobile.ui.screens.student.TeacherCalendarScreen
 import com.utez.nextwordmobile.viewModel.studentViewModel.ChatDetailViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.StudenReservationViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentUpdateProfileViewModel
 
 
 sealed class AppScreens(val route: String) {
@@ -59,13 +66,15 @@ sealed class AppScreens(val route: String) {
         }
     }
 
-    object Inbox : AppScreens("inbox")
+    object StudentProfileUpdate : AppScreens("student_profile_update")
 
     object ChatDetail : AppScreens("chat_detail/{contactId}/{contactName}/{myId}") {
         fun createRoute(contactId: String, contactName: String, myId: String): String {
             return "chat_detail/$contactId/${android.net.Uri.encode(contactName)}/$myId"
         }
     }
+
+    object StudentProfile : AppScreens("student_profile")
 
 }
 
@@ -139,12 +148,23 @@ fun AppNavigation() {
             )
         }
         composable(AppScreens.StudentDashboard.route) {
+            val context = LocalContext.current
             StudentDashboardScreen(
                 onNavigateToCalendar = { teacherId, teacherName, studentId ->
                     navController.navigate(AppScreens.TeacherCalendar.createRoute(teacherId, teacherName, studentId))
                 },
                 onNavigateToChat = { contactId, contactName, myId ->
                     navController.navigate(AppScreens.ChatDetail.createRoute(contactId, contactName, myId))
+                },
+                onLogout = { // 🌟 LA LÓGICA DE CERRAR SESIÓN
+                    // Borramos el Token del celular
+                    val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
+                    prefs.edit().remove("JWT_TOKEN").apply()
+
+                    // Lo mandamos al Login sin que pueda regresar
+                    navController.navigate(AppScreens.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -152,9 +172,9 @@ fun AppNavigation() {
         composable(
             route = AppScreens.TeacherCalendar.route,
             arguments = listOf(
-                androidx.navigation.navArgument("teacherId") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("teacherName") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("studentId") { type = androidx.navigation.NavType.StringType }
+                navArgument("teacherId") { type = NavType.StringType },
+                navArgument("teacherName") { type =NavType.StringType },
+                navArgument("studentId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             // 1. Extraemos los datos de la ruta
@@ -162,7 +182,6 @@ fun AppNavigation() {
             val teacherName = backStackEntry.arguments?.getString("teacherName") ?: ""
             val studentId = backStackEntry.arguments?.getString("studentId") ?: ""
 
-            // 2. Creamos el ViewModel manualmente (Porque requiere el Repository)
             val context = LocalContext.current
             val factory = object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -173,9 +192,8 @@ fun AppNavigation() {
                 }
             }
             val reservationViewModel: StudenReservationViewModel =
-                androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
+                viewModel(factory = factory)
 
-            // 3. ¡Invocamos a la pantalla sin errores!
             TeacherCalendarScreen(
                 teacherId = teacherId,
                 teacherName = teacherName,
@@ -185,7 +203,7 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onReservationSuccess = {
-                    navController.popBackStack() // Regresa al Home tras pagar con éxito
+                    navController.popBackStack()
                 }
             )
         }
@@ -209,7 +227,7 @@ fun AppNavigation() {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     val api = RetrofitClient.getAuthenticatedClient(context).create(MessagingApiService::class.java)
                     val repo = MessagingRepository(api)
-                    // 🌟 Pasamos el myId real al ViewModel
+                    //Pasamos el myId real al ViewModel
                     return ChatDetailViewModel(repo, myId, contactId) as T
                 }
             }
@@ -224,6 +242,9 @@ fun AppNavigation() {
                 }
             )
         }
+
+
+
 
 
 

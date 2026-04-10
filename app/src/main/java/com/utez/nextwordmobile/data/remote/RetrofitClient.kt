@@ -10,7 +10,7 @@ import kotlin.jvm.java
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://192.168.100.7:8080/"
+    private const val BASE_URL = "http://192.168.100.8:8080/"
 
     private var retrofitAuth: Retrofit? = null
     private val retrofit: Retrofit by lazy {
@@ -31,7 +31,7 @@ object RetrofitClient {
     fun getAuthenticatedClient(context: Context): Retrofit {
         if (retrofitAuth == null) {
             val okHttpClient = OkHttpClient.Builder()
-                .addInterceptor(AuthInterceptor(context)) // Aquí metemos al asistente
+                .addInterceptor(AuthInterceptor(context))
                 .build()
 
             retrofitAuth = Retrofit.Builder()

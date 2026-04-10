@@ -42,9 +42,9 @@ class ChatDetailViewModel(
     private fun connectAndSubscribe() {
         viewModelScope.launch {
             try {
-                val session = repository.connectToWebSocket("ws://192.168.100.7:8080/ws")
+                val session = repository.connectToWebSocket("ws://192.168.100.8:8080/ws")
 
-                println("WebSocket Conectado!")
+                println("WebSocket Conectado")
 
                 session.subscribeText("/topic/messages").collect { jsonMensaje ->
                     println("Mensaje recibido del servidor: $jsonMensaje")

@@ -24,17 +24,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.utez.nextwordmobile.data.remote.RetrofitClient
+import com.utez.nextwordmobile.data.remote.api.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
 import com.utez.nextwordmobile.data.repository.MessagingRepository
+import com.utez.nextwordmobile.data.repository.ReservationRepository
+import com.utez.nextwordmobile.ui.AppScreens
 import com.utez.nextwordmobile.ui.components.BottomNavItem
 import com.utez.nextwordmobile.ui.components.NextWordBottomBar
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
+import com.utez.nextwordmobile.viewModel.studentViewModel.StudentClassesViewModel
 import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewModel
 
 @Composable
 fun StudentDashboardScreen(
     onNavigateToCalendar: (String, String, String) -> Unit,
-    onNavigateToChat: (String, String, String) -> Unit) {
+    onNavigateToChat: (String, String, String) -> Unit,
+    onLogout: () -> Unit) {
 
     val bottomNavController = rememberNavController()
     val context = LocalContext.current
@@ -74,7 +79,8 @@ fun StudentDashboardScreen(
                             }
 
                         },
-                        onNavigateToCalendar = onNavigateToCalendar
+                        onNavigateToCalendar = onNavigateToCalendar,
+                        onLogout = onLogout
                     )
                 }
 
@@ -88,9 +94,20 @@ fun StudentDashboardScreen(
 
                 // 3. Pestaña CLASES
                 composable(BottomNavItem.Clases.route) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Mis Clases - Próximamente")
+                    val factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            val api = RetrofitClient.getAuthenticatedClient(context).create(
+                                ReservationApiService::class.java)
+                            val repo = ReservationRepository(api)
+                            return StudentClassesViewModel(repo) as T
+                        }
                     }
+                    val classesViewModel: StudentClassesViewModel = viewModel(factory = factory)
+
+                    StudentClassesScreen(
+                        paddingValues = paddingValues,
+                        viewModel = classesViewModel
+                    )
                 }
 
                 // 4. Pestaña MENSAJES
@@ -103,7 +120,7 @@ fun StudentDashboardScreen(
                             return InboxViewModel(repo) as T
                         }
                     }
-                    val inboxViewModel: InboxViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
+                    val inboxViewModel: InboxViewModel = viewModel(factory = factory)
 
 
                     StudentMessageScreen(

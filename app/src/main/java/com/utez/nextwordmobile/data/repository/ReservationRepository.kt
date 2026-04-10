@@ -2,6 +2,7 @@ package com.utez.nextwordmobile.data.repository
 
 import com.utez.nextwordmobile.data.remote.api.ReservationApiService
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationDto
+import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationResponseDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.SlotResponseDto
 import retrofit2.Response
 
@@ -15,6 +16,9 @@ class ReservationRepository( private val apiService : ReservationApiService) {
         return apiService.bookSlot(request)
     }
 
+    suspend fun getMyClasses(status: String?): Response<List<ReservationResponseDto>> {
+        return apiService.getStudentHistory(status)
+    }
 
 
 
