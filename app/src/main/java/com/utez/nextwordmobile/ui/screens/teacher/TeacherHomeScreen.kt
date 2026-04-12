@@ -19,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -34,9 +33,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.utez.nextwordmobile.R
 import com.utez.nextwordmobile.ui.theme.NextWordGradient
 import com.utez.nextwordmobile.ui.theme.PrimaryDark
+import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
 import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherHomeViewModel
-// IMPORTANTE: Asegúrate de importar tu ViewModel correcto aquí
-// import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherProfileViewModel
+import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherUpdateProfileViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -46,7 +45,11 @@ fun TeacherHomeScreen(
     paddingValues: PaddingValues,
     onNavigateToClasses: () -> Unit,
     onNavigateToMessages: () -> Unit,
-    viewModel: TeacherHomeViewModel = viewModel()
+    onNavigateToChat: (String, String) -> Unit,
+    onLogout: () -> Unit,
+    viewModel: TeacherHomeViewModel,
+    inboxViewModel: InboxViewModel,
+    updateProfileViewModel: TeacherUpdateProfileViewModel
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -55,12 +58,18 @@ fun TeacherHomeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     // val agendaList by viewModel.agendaList.collectAsState() // Lo usaremos después
 
+    val inboxList by inboxViewModel.inboxList.collectAsState()
+
     val nombreProfesor = teacherProfile?.fullName ?: "Cargando..."
     val primerNombre = nombreProfesor.substringBefore(" ")
     val valoracion = teacherProfile?.averageRating ?: 0.0
     val clasesHoyCount = 0
 
+    var showProfileDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
     var isRefreshing by remember { mutableStateOf(false) }
+
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
         onRefresh = {
@@ -69,6 +78,7 @@ fun TeacherHomeScreen(
 
                  viewModel.fetchMyProfile(context)
                 //viewModel.fetchMyAgenda(context)
+                inboxViewModel.fetchInbox()
                 delay(800)
                 isRefreshing = false
             }
@@ -78,6 +88,7 @@ fun TeacherHomeScreen(
     // Carga inicial
     LaunchedEffect(Unit) {
        viewModel.fetchMyProfile(context)
+        inboxViewModel.fetchInbox()
         // viewModel.fetchMyAgenda(context)
     }
 
@@ -119,7 +130,7 @@ fun TeacherHomeScreen(
                         modifier = Modifier
                             .size(45.dp)
                             .background(Color.White.copy(alpha = 0.2f), CircleShape)
-                            .clickable { /* Abrir configuración de profesor */ },
+                            .clickable { showProfileDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
                         val iniciales = if (nombreProfesor != "Cargando..." && nombreProfesor.contains(" ")) {
@@ -247,10 +258,32 @@ fun TeacherHomeScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column {
-                    // Aquí recorrerías tus mensajes reales
-                    RecentMessageRow(name = "Carlos Rodríguez", message = "Podemos repasar los temas de...", time = "Hace 5 min", unread = true)
-                    Divider(color = Color(0xFFF0F0F0), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                    RecentMessageRow(name = "Ana Sofía", message = "Muchas gracias por la clase profe.", time = "Ayer", unread = false)
+                    // 🌟 LÓGICA DINÁMICA DE MENSAJES
+                    if (inboxList.isEmpty()) {
+                        Text(
+                            text = "No tienes mensajes recientes.",
+                            color = Color.Gray,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        // Solo tomamos los primeros 2 o 3 mensajes para no saturar el dashboard
+                        val recentMessages = inboxList.take(3)
+
+                        recentMessages.forEachIndexed { index, chat ->
+                            RecentMessageRow(
+                                name = chat.name,
+                                message = chat.lastMessage,
+                                time = chat.dateLastMessage.take(10), // Puedes formatear mejor la fecha si gustas
+                                unread = chat.unreadCount > 0,
+                                onClick = { onNavigateToChat(chat.contactId, chat.name) }
+                            )
+                            if (index < recentMessages.size - 1) {
+                                Divider(color = Color(0xFFF0F0F0), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                            }
+                        }
+                    }
                 }
             }
 
@@ -265,6 +298,26 @@ fun TeacherHomeScreen(
             contentColor = PrimaryDark,
             scale = true
         )
+
+        if (showProfileDialog) {
+            TeacherUpdateProfileScreen(
+                currentUser = teacherProfile,
+                viewModel = updateProfileViewModel,
+                onDismiss = { showProfileDialog = false },
+                onProfileUpdated = {
+                    showProfileDialog = false
+                    viewModel.fetchMyProfile(context)
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Perfil actualizado correctamente",
+                            duration = SnackbarDuration.Short
+                        )
+
+                    }
+                },
+                onLogout = onLogout
+            )
+        }
     }
 }
 
@@ -312,13 +365,19 @@ fun TeacherClassCard(studentName: String, time: String, duration: String, status
 }
 
 @Composable
-fun RecentMessageRow(name: String, message: String, time: String, unread: Boolean) {
+fun RecentMessageRow(name: String, message: String, time: String, unread: Boolean, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { /* Navegar al chat */ }.padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .clickable { onClick() },
+
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier.size(40.dp).background(Color(0xFFE3E8FA), CircleShape),
+            modifier = Modifier
+                .size(40.dp)
+                .background(Color(0xFFE3E8FA), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(name.take(1).uppercase(), color = PrimaryDark, fontWeight = FontWeight.Bold, fontSize = 16.sp)

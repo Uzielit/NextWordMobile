@@ -18,10 +18,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.utez.nextwordmobile.data.remote.RetrofitClient
-import com.utez.nextwordmobile.data.remote.api.ReservationApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.StudentApiService
 import com.utez.nextwordmobile.data.repository.MessagingRepository
 import com.utez.nextwordmobile.data.repository.ReservationRepository
+import com.utez.nextwordmobile.data.repository.StudentProfileRepository
 import com.utez.nextwordmobile.ui.components.BottomNavItem
 import com.utez.nextwordmobile.ui.components.NextWordStudentBottomBar
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
@@ -36,8 +38,20 @@ fun StudentDashboardScreen(
 
     val bottomNavController = rememberNavController()
     val context = LocalContext.current
+    val profileFactory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val profileApi = RetrofitClient.getAuthenticatedClient(context).create(StudentApiService::class.java)
+            val profileRepo = StudentProfileRepository(profileApi)
 
-    val profileViewModel: StudentProfileViewModel = viewModel()
+            val reservationApi = RetrofitClient.getAuthenticatedClient(context).create(ReservationApiService::class.java)
+            val reservationRepo = ReservationRepository(reservationApi)
+
+            return StudentProfileViewModel(profileRepo, reservationRepo) as T
+        }
+    }
+
+    val profileViewModel: StudentProfileViewModel = viewModel(factory = profileFactory)
+
     val studentProfile by profileViewModel.studentProfile.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -73,7 +87,8 @@ fun StudentDashboardScreen(
 
                         },
                         onNavigateToCalendar = onNavigateToCalendar,
-                        onLogout = onLogout
+                        onLogout = onLogout,
+                        StudentProfileViewModel = profileViewModel
                     )
                 }
 
@@ -81,7 +96,8 @@ fun StudentDashboardScreen(
                 composable(BottomNavItem.Buscar.route) {
                     StudentSearchScreen(
                         paddingValues = paddingValues,
-                        onNavigateToCalendar = onNavigateToCalendar
+                        onNavigateToCalendar = onNavigateToCalendar,
+                        viewModel = profileViewModel
                     )
                 }
 

@@ -173,7 +173,7 @@ fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
                     Icon(
                         imageVector = Icons.Default.DoneAll,
                         contentDescription = "Enviado",
-                        tint = Color(0xFF34B7F1),
+                        tint = if (chat.lastMessageRead == "1") Color(0xFF34B7F1) else Color.Gray,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))

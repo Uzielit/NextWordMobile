@@ -28,13 +28,15 @@ data class SlotResponseDto(
 
 data class ReservationResponseDto(
     val reservationId: String,
-    val participantName: String,
+    val studentName: String,
+    val teacherName: String,
     val date: String,
     val startTime: String,
     val endTime: String,
-    val classType: String,
+    val topic: String,
     val status: String,
-    val meetLink: String?
+    val meetLink: String?,
+    val hasReview: Boolean
 )
 
 

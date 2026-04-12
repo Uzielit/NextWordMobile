@@ -171,7 +171,7 @@ fun ClassCard(reservation: ReservationResponseDto, filters: List<FilterOption>) 
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = reservation.classType,
+                    text = reservation.topic,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -201,13 +201,13 @@ fun ClassCard(reservation: ReservationResponseDto, filters: List<FilterOption>) 
                         .background(Color(0xFFE3E8FA)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(reservation.participantName.take(2).uppercase(),
+                    Text(reservation.teacherName.take(2).uppercase(),
                         color = PrimaryDark,
                         fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(reservation.participantName, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(reservation.teacherName, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Text("${reservation.date} • ${reservation.startTime}", fontSize = 12.sp, color = Color.Gray)
                 }
             }

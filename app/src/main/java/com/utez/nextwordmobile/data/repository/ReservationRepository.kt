@@ -1,6 +1,7 @@
 package com.utez.nextwordmobile.data.repository
 
-import com.utez.nextwordmobile.data.remote.api.ReservationApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.ReservationApiService
+import com.utez.nextwordmobile.data.remote.dto.ReviewRequestDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationResponseDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.SlotResponseDto
@@ -21,5 +22,6 @@ class ReservationRepository( private val apiService : ReservationApiService) {
     }
 
 
+    suspend fun leaveReview(request: ReviewRequestDto) = apiService.leaveReview(request)
 
 }

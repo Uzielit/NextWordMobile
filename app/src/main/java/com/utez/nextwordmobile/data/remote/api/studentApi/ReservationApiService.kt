@@ -1,10 +1,14 @@
-package com.utez.nextwordmobile.data.remote.api
+package com.utez.nextwordmobile.data.remote.api.studentApi
 
+import com.utez.nextwordmobile.data.remote.dto.ReviewRequestDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationResponseDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.SlotResponseDto
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ReservationApiService {
 
@@ -31,5 +35,7 @@ interface ReservationApiService {
     ): Response<List<ReservationResponseDto>>
 
 
+    @POST("api/reviews")
+    suspend fun leaveReview(@Body request: ReviewRequestDto): Response<String>
 
 }

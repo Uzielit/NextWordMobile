@@ -4,22 +4,51 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.utez.nextwordmobile.data.remote.RetrofitClient
-import com.utez.nextwordmobile.data.remote.api.ReservationApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.StudentApiService
-import com.utez.nextwordmobile.data.remote.api.studentApi.TeacherApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.StudentTeacherApiService
+import com.utez.nextwordmobile.data.remote.dto.ReviewRequestDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationResponseDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.StudentProfileDto
 import com.utez.nextwordmobile.data.remote.dto.teacherDto.TeacherDto
+import com.utez.nextwordmobile.data.repository.ReservationRepository
+import com.utez.nextwordmobile.data.repository.StudentProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.jvm.java
 
-class StudentProfileViewModel : ViewModel() {
+class StudentProfileViewModel (
+    private val profileRepository: StudentProfileRepository,
+    private val reservationRepository: ReservationRepository
+): ViewModel() {
     private val _studentProfile = MutableStateFlow<StudentProfileDto?>(null)
     val studentProfile: StateFlow<StudentProfileDto?> = _studentProfile
 
 
+    private val _isReviewLoading = MutableStateFlow(false)
+    val isReviewLoading: StateFlow<Boolean> = _isReviewLoading
+
+    // Función para enviar la reseña
+    fun submitReview(reservationId: String, rating: Int, comment: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _isReviewLoading.value = true
+            try {
+                val request = ReviewRequestDto(reservationId, comment, rating)
+                val response = reservationRepository.leaveReview(request)
+
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    println("Error: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isReviewLoading.value = false
+            }
+        }
+    }
     fun fetchMyProfile(context: Context) {
         viewModelScope.launch {
             try {
@@ -43,7 +72,7 @@ class StudentProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val api = RetrofitClient.getAuthenticatedClient(context)
-                    .create(TeacherApiService::class.java)
+                    .create(StudentTeacherApiService::class.java)
                 val response = api.getAllTeachers()
                 if (response.isSuccessful) {
                     _teachersList.value = response.body() ?: emptyList()

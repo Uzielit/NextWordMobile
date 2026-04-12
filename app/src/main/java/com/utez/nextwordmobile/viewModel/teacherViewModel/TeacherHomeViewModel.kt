@@ -17,7 +17,6 @@ class TeacherHomeViewModel(private val repository: TeacherProfileRepository) : V
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // 🌟 NOTA: Por ahora dejamos estos vacíos hasta que hagamos los endpoints en Spring Boot
     private val _agendaList = MutableStateFlow<List<Any>>(emptyList())
     val agendaList: StateFlow<List<Any>> = _agendaList
 

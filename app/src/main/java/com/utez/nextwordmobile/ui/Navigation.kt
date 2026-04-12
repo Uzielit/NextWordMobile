@@ -21,7 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.utez.nextwordmobile.data.remote.RetrofitClient
-import com.utez.nextwordmobile.data.remote.api.ReservationApiService
+import com.utez.nextwordmobile.data.remote.api.studentApi.ReservationApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.MessagingApiService
 import com.utez.nextwordmobile.data.remote.api.studentApi.StudentApiService
 import com.utez.nextwordmobile.data.repository.MessagingRepository
@@ -75,6 +75,14 @@ sealed class AppScreens(val route: String) {
     //-----------
     //Rutas de profesores
     object TeacherDashboard : AppScreens("teacher_dashboard")
+
+
+    // 🌟 NUEVA RUTA PARA EL CHAT DEL PROFESOR
+    object TeacherChatDetail : AppScreens("teacher_chat_detail/{contactId}/{contactName}/{myId}") {
+        fun createRoute(contactId: String, contactName: String, myId: String): String {
+            return "teacher_chat_detail/$contactId/${android.net.Uri.encode(contactName)}/$myId"
+        }
+    }
 
 
 
@@ -168,6 +176,7 @@ fun AppNavigation() {
         }
         composable(AppScreens.StudentDashboard.route) {
             val context = LocalContext.current
+
             StudentDashboardScreen(
                 onNavigateToCalendar = { teacherId, teacherName, studentId ->
                     navController.navigate(AppScreens.TeacherCalendar.createRoute(teacherId, teacherName, studentId))
@@ -175,12 +184,10 @@ fun AppNavigation() {
                 onNavigateToChat = { contactId, contactName, myId ->
                     navController.navigate(AppScreens.ChatDetail.createRoute(contactId, contactName, myId))
                 },
-                onLogout = { // 🌟 LA LÓGICA DE CERRAR SESIÓN
-                    // Borramos el Token del celular
+                onLogout = {
                     val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
                     prefs.edit().remove("JWT_TOKEN").apply()
 
-                    // Lo mandamos al Login sin que pueda regresar
                     navController.navigate(AppScreens.Auth.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -268,18 +275,73 @@ fun AppNavigation() {
 
             TeacherDashboardScreen(
                 onLogout = {
-                    // Lógica para cerrar sesión (idéntica a la del estudiante)
                     val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
                     prefs.edit().remove("JWT_TOKEN").apply()
 
                     navController.navigate(AppScreens.Auth.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onNavigateToChat = { contactId, contactName, myId ->
+                    navController.navigate(AppScreens.TeacherChatDetail.createRoute(contactId, contactName, myId))
                 }
             )
         }
 
 
+      /*
+        composable(AppScreens.TeacherDashboard.route) {
+            val context = LocalContext.current
+
+            TeacherDashboardScreen(
+                onLogout = {
+                    val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
+                    prefs.edit().remove("JWT_TOKEN").apply()
+
+                    navController.navigate(AppScreens.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateToChat = { contactId, contactName, myId ->
+                    navController.navigate(AppScreens.TeacherChatDetail.createRoute(contactId, contactName, myId))
+                }
+            )
+        }
+       */
+        composable(
+            route = AppScreens.TeacherChatDetail.route,
+            arguments = listOf(
+                navArgument("contactId") { type = NavType.StringType },
+                navArgument("contactName") { type = NavType.StringType },
+                navArgument("myId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString("contactId") ?: ""
+            val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
+            val myId = backStackEntry.arguments?.getString("myId") ?: ""
+
+            val context = LocalContext.current
+
+            val factory = object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    // Reutilizamos el mismo servicio de mensajería
+                    val api = RetrofitClient.getAuthenticatedClient(context).create(MessagingApiService::class.java)
+                    val repo = MessagingRepository(api)
+                    return ChatDetailViewModel(repo, myId, contactId) as T
+                }
+            }
+            val chatViewModel: ChatDetailViewModel = viewModel(factory = factory)
+
+            // LLAMAMOS A LA PANTALLA DEL PROFESOR
+            com.utez.nextwordmobile.ui.screens.teacher.TeacherChatScreen(
+                contactName = contactName,
+                myId = myId,
+                viewModel = chatViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
 
 
 

@@ -18,7 +18,6 @@ class StudentClassesViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // Guardamos el filtro actual. Empezamos con "Pendiente" por defecto
     private val _currentFilter = MutableStateFlow("Pendiente")
     val currentFilter: StateFlow<String> = _currentFilter
 
