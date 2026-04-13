@@ -19,6 +19,7 @@ class TeacherSlotsViewModel(private val repository: TeacherProfileRepository) : 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+
     fun fetchSlots(date: String, teacherId: String) {
         viewModelScope.launch {
             _isLoading.value = true

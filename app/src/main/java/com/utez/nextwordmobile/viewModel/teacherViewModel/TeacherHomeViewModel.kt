@@ -20,6 +20,7 @@ class TeacherHomeViewModel(private val repository: TeacherProfileRepository) : V
     private val _agendaList = MutableStateFlow<List<Any>>(emptyList())
     val agendaList: StateFlow<List<Any>> = _agendaList
 
+
     private val _recentMessages = MutableStateFlow<List<Any>>(emptyList())
     val recentMessages: StateFlow<List<Any>> = _recentMessages
 
