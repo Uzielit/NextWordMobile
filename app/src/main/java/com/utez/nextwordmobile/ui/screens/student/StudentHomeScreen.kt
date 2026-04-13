@@ -42,6 +42,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import com.utez.nextwordmobile.ui.components.ReviewDialog
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -53,7 +54,7 @@ fun StudentHomeScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToCalendar: (String, String, String) -> Unit,
     onLogout: () -> Unit,
-    StudentProfileViewModel: StudentProfileViewModel = viewModel()
+    StudentProfileViewModel: StudentProfileViewModel
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -78,13 +79,26 @@ fun StudentHomeScreen(
 
     val nextClass = agendaList.firstOrNull()
     val hasUpcomingClass = nextClass != null
-    val nextClassTeacher = nextClass?.participantName ?: ""
+    val nextClassTeacher = nextClass?.teacherName ?: ""
     val nextClassDate = nextClass?.date ?: "--"
     val nextClassTime = nextClass?.startTime ?: "--"
     val clasesTomadas = historialList.size
 
 
     var isRefreshing by remember { mutableStateOf(false) }
+
+    val classToReview = remember(historialList) {
+        historialList.find { it.status == "COMPLETED" }
+    }
+
+    var showReviewModal by remember { mutableStateOf(false) }
+
+    LaunchedEffect(classToReview) {
+        if (classToReview != null) {
+            showReviewModal = true
+        }
+    }
+
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
         onRefresh = {
@@ -379,6 +393,32 @@ fun StudentHomeScreen(
                 }
             },
             onLogout = onLogout
+        )
+    }
+
+
+    if (showReviewModal && classToReview != null) {
+
+        val teacherNameForReview = classToReview.teacherName
+        val idForReview = classToReview.reservationId
+
+        ReviewDialog(
+            teacherName = teacherNameForReview,
+            isLoading = false,
+            onDismiss = { showReviewModal = false },
+            onSubmit = { rating, comment ->
+                StudentProfileViewModel.submitReview(
+                    reservationId = idForReview,
+                    rating = rating,
+                    comment = comment,
+                    onSuccess = {
+                        showReviewModal = false
+                        coroutineScope.launch {
+                            StudentProfileViewModel.fetchMyHistory(context)
+                        }
+                    }
+                )
+            }
         )
     }
 }

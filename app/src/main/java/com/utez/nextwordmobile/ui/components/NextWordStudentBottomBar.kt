@@ -16,7 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.utez.nextwordmobile.ui.theme.PrimaryDark
 
 @Composable
-fun NextWordBottomBar(navController: NavController) {
+fun NextWordStudentBottomBar(navController: NavController) {
     val items = listOf(
         BottomNavItem.Inicio,
         BottomNavItem.Buscar,

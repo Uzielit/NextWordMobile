@@ -1,4 +1,4 @@
-package com.utez.nextwordmobile.ui.screens.student
+package com.utez.nextwordmobile.ui.screens.teacher
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Message
@@ -24,22 +23,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.utez.nextwordmobile.R
 import com.utez.nextwordmobile.data.remote.dto.studentDto.messagingDto.InboxDto
-
 import com.utez.nextwordmobile.ui.theme.NextWordGradient
 import com.utez.nextwordmobile.ui.theme.PrimaryDark
-
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
 
-
 @Composable
-fun StudentMessageScreen(
+fun TeacherMessageScreen(
     paddingValues: PaddingValues,
     onNavigateToChat: (String, String) -> Unit,
     viewModel: InboxViewModel
 ) {
     val inboxList by viewModel.inboxList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-
 
     LaunchedEffect(Unit) {
         viewModel.fetchInbox()
@@ -51,6 +46,7 @@ fun StudentMessageScreen(
             .background(Color(0xFFF5F5F5))
             .padding(bottom = paddingValues.calculateBottomPadding())
     ) {
+        // HEADER
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -94,7 +90,7 @@ fun StudentMessageScreen(
                 Icon(Icons.Default.Message, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(64.dp))
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Aún no tienes mensajes", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                Text("Tus chats aparecerán aquí.", fontSize = 14.sp, color = Color.LightGray)
+                Text("Tus chats con alumnos aparecerán aquí.", fontSize = 14.sp, color = Color.LightGray)
             }
         } else {
             LazyColumn(
@@ -103,7 +99,7 @@ fun StudentMessageScreen(
             ) {
                 items(inboxList.size) { index ->
                     val chat = inboxList[index]
-                    ChatListItem(
+                    TeacherChatListItem(
                         chat = chat,
                         onClick = { onNavigateToChat(chat.contactId, chat.name) }
                     )
@@ -117,7 +113,7 @@ fun StudentMessageScreen(
 }
 
 @Composable
-fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
+fun TeacherChatListItem(chat: InboxDto, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -157,7 +153,6 @@ fun ChatListItem(chat: InboxDto, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-
 
                 Text(
                     text = chat.dateLastMessage.take(10),

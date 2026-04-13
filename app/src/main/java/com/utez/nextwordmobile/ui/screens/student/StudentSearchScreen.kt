@@ -32,7 +32,7 @@ import com.utez.nextwordmobile.viewModel.studentViewModel.StudentProfileViewMode
 fun StudentSearchScreen(
     paddingValues: PaddingValues,
     onNavigateToCalendar: (String, String, String) -> Unit,
-    viewModel: StudentProfileViewModel = viewModel()
+    viewModel: StudentProfileViewModel
 
 ) {
     val context = LocalContext.current
@@ -112,7 +112,6 @@ fun StudentSearchScreen(
                         TeacherCard(
                             teacher = teacher,
                             onVerHorariosClick = {
-                                // 🌟 AQUÍ ESTABA EL ERROR: Faltaba guardar el objeto
                                 selectedTeacher = teacher
                                 showTeacherDetails = true
                             }
@@ -128,7 +127,6 @@ fun StudentSearchScreen(
     if (showTeacherDetails && selectedTeacher != null) {
         TeacherDetailBottomSheet(
             teacher = selectedTeacher!!,
-            // OTRO SEGURO: Si el perfil tarda en cargar, mandamos "SIN_ID" en lugar de "" para que no explote la navegación
             studentId = studentProfile?.id?.takeIf { it.isNotBlank() } ?: "SIN_ID",
             onDismiss = { showTeacherDetails = false },
             onNavigateToCalendar = { tId, tName, sId ->

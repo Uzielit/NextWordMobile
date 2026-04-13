@@ -7,5 +7,6 @@ data class InboxDto(
     val lastMessage: String,
     val dateLastMessage: String,
     val sentByMe: Boolean,
-    val unreadCount: Int
+    val unreadCount: Int,
+    val lastMessageRead: String? = "0"
 )

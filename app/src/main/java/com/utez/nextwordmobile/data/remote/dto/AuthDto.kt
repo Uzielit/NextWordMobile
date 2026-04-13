@@ -6,7 +6,8 @@ data class LoginRequestDto(
 )
 
 data class AuthResponseDto(
-    val token: String
+    val token: String,
+    val roleId : Int
 )
 
 data class StudentRegistrationRequest(

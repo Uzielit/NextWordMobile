@@ -1,5 +1,6 @@
 package com.utez.nextwordmobile.ui.screens.student
 
+import android.text.TextUtils.split
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,7 +55,7 @@ fun ReservationDetailBottomSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
-            val parts = reservation.participantName.split(" ")
+            val parts = reservation.teacherName.split(" ")
             val initials = if (parts.size > 1) "${parts[0].take(1)}${parts[1].take(1)}" else parts[0].take(2)
 
             // Cabecera con el Profe
@@ -67,8 +68,8 @@ fun ReservationDetailBottomSheet(
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Clase de ${reservation.classType ?: "Inglés"}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(reservation.participantName, fontSize = 14.sp, color = Color.DarkGray)
+                    Text("Clase de ${reservation.topic ?: "Inglés"}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(reservation.teacherName, fontSize = 14.sp, color = Color.DarkGray)
                 }
             }
 
