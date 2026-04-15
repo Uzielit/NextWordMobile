@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -25,8 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-// 🌟 Asegúrate de importar el DTO correcto que represente al Admin actual
-// import com.utez.nextwordmobile.data.remote.dto.adminDto.AdminDto
 import com.utez.nextwordmobile.data.remote.dto.adminDto.UpdateProfileRequest
 import com.utez.nextwordmobile.ui.theme.PrimaryDark
 import com.utez.nextwordmobile.viewModel.adminViewModel.AdminUpdateProfileViewModel
@@ -34,7 +33,7 @@ import com.utez.nextwordmobile.viewModel.adminViewModel.AdminUpdateProfileViewMo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminProfileScreen(
-    currentUser: Any?, // ⚠️ CAMBIA "Any?" por la clase de tu Admin (Ej: AdminDashboardResponse.Stats o UserDto)
+    currentUser: Any?,
     viewModel: AdminUpdateProfileViewModel,
     onDismiss: () -> Unit,
     onProfileUpdated: () -> Unit,
@@ -42,35 +41,32 @@ fun AdminProfileScreen(
 ) {
     val context = LocalContext.current
 
-    // 🌟 Extraemos los datos iniciales (Ajusta los campos según tu DTO real)
-    // val adminId = currentUser?.id ?: ""
-    // val initialName = currentUser?.fullName ?: ""
-    // val initialEmail = currentUser?.email ?: ""
-    // val initialPhone = currentUser?.phoneNumber ?: ""
+    val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
+    val initialName = prefs.getString("USER_NAME", "Administrador") ?: "Administrador"
+    val initialEmail = prefs.getString("USER_EMAIL", "admin@nextword.com.mx") ?: "admin@nextword.com.mx"
+    val initialPhone = prefs.getString("USER_PHONE", "") ?: ""
 
-    // Simulación temporal para que no marque error mientras ajustas tu DTO:
-    val adminId = "ID_DEL_ADMIN"
-    val initialName = "Administrador"
-    val initialEmail = "admin@nextword.com.mx"
-    val initialPhone = ""
+    var fullName by remember { mutableStateOf(initialName) }
+    var phoneNumber by remember { mutableStateOf(initialPhone) }
 
-    // 🌟 ESTADOS DEL PERFIL CON REMEMBER (Si el DTO cambia, esto se actualiza)
-    var fullName by remember(currentUser) { mutableStateOf(initialName) }
-    var phoneNumber by remember(currentUser) { mutableStateOf(initialPhone) }
 
-    // 🌟 ESTADOS DE LA CONTRASEÑA
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Obtenemos el estado de carga desde el ViewModel
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // Validaciones
     val passwordsMatch = newPassword == confirmPassword
+
     val hasProfileChanges = fullName != initialName || phoneNumber != initialPhone || newPassword.isNotBlank()
-    val isFormValid = fullName.isNotBlank() && phoneNumber.isNotBlank() && passwordsMatch
+
+    val isFormValid = fullName.isNotBlank() && passwordsMatch
     val canSave = isFormValid && hasProfileChanges && !isLoading
+
+    LaunchedEffect(initialName, initialPhone) {
+        fullName = initialName
+        phoneNumber = initialPhone
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -104,7 +100,7 @@ fun AdminProfileScreen(
                 ) {
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 1. FOTO DE PERFIL
+                    // FOTO DE PERFIL
                     Box(contentAlignment = Alignment.BottomEnd) {
                         Box(
                             modifier = Modifier.size(100.dp).clip(CircleShape).background(PrimaryDark),
@@ -122,12 +118,12 @@ fun AdminProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Administrador", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(fullName.ifBlank { "Administrador" }, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text("Acceso Total", color = Color(0xFF3B6D11), fontSize = 14.sp, fontWeight = FontWeight.Medium)
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // 2. DATOS DE LA BD
+                    // DATOS DE CONTACTO
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -156,7 +152,12 @@ fun AdminProfileScreen(
                         label = { Text("Nombre Completo") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        singleLine = true
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF111827),
+                            fontSize = 16.sp
+                        )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -165,22 +166,27 @@ fun AdminProfileScreen(
                         onValueChange = {
                             if (it.all { char -> char.isDigit() }) phoneNumber = it
                         },
-                        label = { Text("Teléfono") },
+                        label = { Text("Teléfono)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        singleLine = true
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF111827),
+                            fontSize = 16.sp
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
                     HorizontalDivider(color = Color(0xFFF0F0F0))
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 3. CAMBIO DE CONTRASEÑA
+                    // CAMBIO DE CONTRASEÑA
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Actualizar Contraseña (Opcional)", fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                        Text("Actualizar Contraseña ", fontWeight = FontWeight.Bold, color = Color.DarkGray)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -197,7 +203,12 @@ fun AdminProfileScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        singleLine = true
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF111827),
+                            fontSize = 16.sp
+                        )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -206,10 +217,22 @@ fun AdminProfileScreen(
                         onValueChange = { confirmPassword = it },
                         label = { Text("Confirmar Nueva Contraseña") },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = image, contentDescription = null)
+                            }
+                        },
                         isError = confirmPassword.isNotEmpty() && !passwordsMatch,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        singleLine = true
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF111827),
+                            fontSize = 16.sp
+                        )
+
                     )
                     if (confirmPassword.isNotEmpty() && !passwordsMatch) {
                         Text("Las contraseñas no coinciden", color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp).align(Alignment.Start))
@@ -217,7 +240,7 @@ fun AdminProfileScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // 🌟 4. BOTÓN QUE LLAMA AL VIEWMODEL DIRECTAMENTE
+                    // BOTÓN DE GUARDAR
                     Button(
                         onClick = {
                             val request = UpdateProfileRequest(
@@ -226,8 +249,7 @@ fun AdminProfileScreen(
                                 profilePicture = null,
                                 newPassword = if (newPassword.isNotBlank()) newPassword else null
                             )
-                            // 🌟 Llamada a la magia del ViewModel
-                            viewModel.updateProfile(context, adminId, request) {
+                            viewModel.updateProfile(context, request) {
                                 onProfileUpdated()
                             }
                         },
@@ -239,7 +261,6 @@ fun AdminProfileScreen(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        // 🌟 Spinner de carga si está procesando
                         if (isLoading) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {

@@ -166,7 +166,6 @@ fun AdminReportsScreen(viewModel: AdminReportsViewModel) {
             }
         }
 
-        // Espaciador para la barra inferior
         Spacer(modifier = Modifier.height(100.dp))
     }
 }
@@ -175,13 +174,11 @@ fun AdminReportsScreen(viewModel: AdminReportsViewModel) {
 
 @Composable
 fun CustomBarChart(data: List<MonthlyIncomeResponse>) {
-    // Si todos los meses tienen 0, usamos 1 para no dividir entre cero
     val maxAmount = data.maxOfOrNull { it.amount }?.toFloat()?.takeIf { it > 0 } ?: 1f
 
     var startAnimation by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { startAnimation = true }
 
-    // Necesitamos invertir la lista porque la sacamos de más nuevo a más viejo en el backend
     val chronologicalData = data.reversed()
 
     Row(
@@ -192,9 +189,6 @@ fun CustomBarChart(data: List<MonthlyIncomeResponse>) {
         chronologicalData.forEach { monthData ->
             val amountFloat = monthData.amount.toFloat()
 
-            // 🌟 EL TRUCO ESTÁ AQUÍ:
-            // Multiplicamos por 0.70f para que la barra más alta solo ocupe el 70% de la tarjeta.
-            // Así dejamos espacio para el texto de arriba ($) y el mes de abajo.
             val maxBarHeight = 0.70f
             val targetFraction = if (amountFloat == 0f) 0.02f else (amountFloat / maxAmount) * maxBarHeight
 
@@ -207,11 +201,9 @@ fun CustomBarChart(data: List<MonthlyIncomeResponse>) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom,
-                modifier = Modifier.weight(1f).fillMaxHeight() // 🌟 Evitamos que la columna colapse
+                modifier = Modifier.weight(1f).fillMaxHeight()
             ) {
-                // Texto de la cantidad ($)
                 if (startAnimation && amountFloat > 0) {
-                    // Formato corto para el dinero (Ej: 1.5k o 400)
                     val label = if (amountFloat >= 1000) "$${String.format("%.1f", amountFloat / 1000)}k" else "$${amountFloat.toInt()}"
                     Text(
                         text = label,
@@ -234,7 +226,6 @@ fun CustomBarChart(data: List<MonthlyIncomeResponse>) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Texto del Mes (Ene, Feb, etc.)
                 Text(
                     text = monthData.month,
                     fontSize = 12.sp,

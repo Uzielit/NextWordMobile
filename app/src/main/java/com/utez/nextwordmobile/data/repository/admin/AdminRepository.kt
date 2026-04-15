@@ -8,6 +8,7 @@ import com.utez.nextwordmobile.data.remote.dto.adminDto.CreateTeacherRequest
 import com.utez.nextwordmobile.data.remote.dto.adminDto.FinancialReportResponse
 import com.utez.nextwordmobile.data.remote.dto.adminDto.UpdateProfileRequest
 import com.utez.nextwordmobile.data.remote.dto.adminDto.UserDirectoryResponse
+import org.json.JSONObject
 
 class AdminRepository(private val apiService: AdminApiService) {
 
@@ -44,10 +45,19 @@ class AdminRepository(private val apiService: AdminApiService) {
             if (response.isSuccessful) {
                 Result.success("Profesor creado exitosamente")
             } else {
-                Result.failure(Exception("Error al crear profesor: ${response.code()}"))
+
+                val errorBodyString = response.errorBody()?.string()
+                val errorMessage = try {
+                    val jsonObject = JSONObject(errorBodyString ?: "")
+                    jsonObject.optString("error", "Error al crear profesor")
+                } catch (e: Exception) {
+                    "Error de validación en el servidor"
+                }
+
+                Result.failure(Exception(errorMessage)) // Mandamos el mensaje limpio al ViewModel
             }
         } catch (e: Exception) {
-            Result.failure(Exception("Error de red: ${e.message}"))
+            Result.failure(Exception("Error de red: Revisa tu conexión"))
         }
     }
 
@@ -90,13 +100,14 @@ class AdminRepository(private val apiService: AdminApiService) {
         }
     }
 
-    suspend fun updateProfile(token: String, userId: String, request: UpdateProfileRequest): Result<String> {
+    suspend fun updateProfile(token: String, request: UpdateProfileRequest): Result<String> {
         return try {
-            val response = apiService.updateProfile("Bearer $token", userId, request)
+            val response = apiService.updateProfile("Bearer $token", request)
             if (response.isSuccessful) {
-                Result.success("Perfil actualizado")
+                val message = response.body()?.string() ?: "Perfil actualizado"
+                Result.success(message)
             } else {
-                Result.failure(Exception("Error al actualizar: ${response.code()}"))
+                Result.failure(Exception("Error: ${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Error de red: ${e.message}"))

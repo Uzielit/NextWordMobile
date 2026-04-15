@@ -47,10 +47,9 @@ interface AdminApiService {
         @Header("Authorization") token: String
     ): Response<List<ClassHistoryResponse>>
 
-    @PUT("api/admin/profile/{id}")
+    @PUT("api/admin/profile")
     suspend fun updateProfile(
         @Header("Authorization") token: String,
-        @Path("id") userId: String,
         @Body request: UpdateProfileRequest
-    ): retrofit2.Response<okhttp3.ResponseBody>
+    ): Response<ResponseBody>
 }

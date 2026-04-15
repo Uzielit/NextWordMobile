@@ -86,7 +86,6 @@ fun AdminDashboardScreen(
                 AdminUsersScreen(
                     viewModel = viewModel(factory = factory),
                     onNavigateToClasses = {
-                        // 🌟 ESTA ES LA MAGIA QUE ARREGLA EL BACKSTACK:
                         bottomNavController.navigate(AdminBottomNavItem.Clases.route) {
                             // popUpTo evita que se haga una pila infinita de pantallas
                             popUpTo(AdminBottomNavItem.Inicio.route) {

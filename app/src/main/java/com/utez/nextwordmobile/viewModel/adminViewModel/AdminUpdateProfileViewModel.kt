@@ -20,27 +20,32 @@ class AdminUpdateProfileViewModel(
     private val _updateMessage = MutableStateFlow<String?>(null)
     val updateMessage: StateFlow<String?> = _updateMessage
 
-    fun updateProfile(context: Context, adminId: String, updateDto: UpdateProfileRequest, onSuccess: () -> Unit) {
+    fun updateProfile(context: Context, updateDto: UpdateProfileRequest, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _updateMessage.value = null
 
             try {
-                // Recuperamos el token
                 val token = SessionManager(context).fetchAuthToken() ?: ""
 
-                val result = repository.updateProfile(token, adminId, updateDto)
+                val result = repository.updateProfile(token, updateDto)
 
                 result.onSuccess { mensaje ->
+                    // 🌟 MAGIA: Si el servidor dice "OK", guardamos los datos nuevos en la memoria del celular
+                    val prefs = context.getSharedPreferences("NextWordPrefs", Context.MODE_PRIVATE)
+                    prefs.edit()
+                        .putString("USER_NAME", updateDto.fullName ?: "")
+                        .putString("USER_PHONE", updateDto.phoneNumber ?: "")
+                        .apply() // Aplicamos los cambios
+
                     _updateMessage.value = mensaje
-                    onSuccess() // 🌟 Si todo sale bien, cerramos el diálogo
+                    onSuccess()
                 }
                 result.onFailure { excepcion ->
-                    _updateMessage.value = "Error al actualizar perfil: ${excepcion.message}"
+                    _updateMessage.value = "Error al guardar: ${excepcion.message}"
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                _updateMessage.value = "Error de conexión: Verifica tu internet"
+                _updateMessage.value = "Excepción crítica: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
