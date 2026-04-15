@@ -1,11 +1,7 @@
 package com.utez.nextwordmobile.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Message
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val title: String) {
@@ -27,4 +23,12 @@ sealed class TeacherBottomNavItem(val route: String, val icon: ImageVector, val 
 
     object Mensajes : TeacherBottomNavItem("teacher_messages", Icons.Default.Message, "Mensajes")
 
+}
+
+// Barra navegacion de Administrador
+sealed class AdminBottomNavItem(val route: String, val icon: ImageVector, val title: String) {
+    object Inicio : AdminBottomNavItem("admin_home", Icons.Default.Home, "Inicio")
+    object Usuarios : AdminBottomNavItem("admin_users", Icons.Default.People, "Usuarios")
+    object Clases : AdminBottomNavItem("admin_classes", Icons.Default.EventNote, "Clases")
+    object Reportes : AdminBottomNavItem("admin_reports", Icons.Default.BarChart, "Reportes")
 }

@@ -31,6 +31,7 @@ import com.utez.nextwordmobile.ui.screens.AuthScreen
 import com.utez.nextwordmobile.ui.screens.ForgotPasswordScreen
 import com.utez.nextwordmobile.ui.screens.ResetPasswordScreen
 import com.utez.nextwordmobile.ui.screens.VerificationMailScreen
+import com.utez.nextwordmobile.ui.screens.admin.AdminDashboardScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentChatScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentDashboardScreen
 import com.utez.nextwordmobile.ui.screens.student.StudentMessageScreen
@@ -77,7 +78,7 @@ sealed class AppScreens(val route: String) {
     object TeacherDashboard : AppScreens("teacher_dashboard")
 
 
-    // 🌟 NUEVA RUTA PARA EL CHAT DEL PROFESOR
+    // CHAT DEL PROFESOR
     object TeacherChatDetail : AppScreens("teacher_chat_detail/{contactId}/{contactName}/{myId}") {
         fun createRoute(contactId: String, contactName: String, myId: String): String {
             return "teacher_chat_detail/$contactId/${android.net.Uri.encode(contactName)}/$myId"
@@ -85,6 +86,9 @@ sealed class AppScreens(val route: String) {
     }
 
 
+    //-----------
+    //Rutas de administradores
+    object AdminDashboard : AppScreens("admin_dashboard")
 
 }
 
@@ -115,6 +119,9 @@ fun AppNavigation() {
 
                         }
                         3->{
+                            navController.navigate(AppScreens.AdminDashboard.route) {
+                                popUpTo(AppScreens.Auth.route) { inclusive = true }
+                            }
 
                         }
 
@@ -344,6 +351,20 @@ fun AppNavigation() {
         }
 
 
+        composable(AppScreens.AdminDashboard.route) {
+            val context = LocalContext.current
+
+            AdminDashboardScreen(
+                onLogout = {
+                    val prefs = context.getSharedPreferences("NextWordPrefs", android.content.Context.MODE_PRIVATE)
+                    prefs.edit().remove("JWT_TOKEN").apply()
+
+                    navController.navigate(AppScreens.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
 
 
 
