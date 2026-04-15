@@ -23,6 +23,7 @@ import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherHomeViewModel
 import com.utez.nextwordmobile.data.remote.api.teacherApi.TeacherApiService
 import com.utez.nextwordmobile.data.repository.MessagingRepository
 import com.utez.nextwordmobile.viewModel.studentViewModel.InboxViewModel
+import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherClassesViewModel
 import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherSlotsViewModel
 import com.utez.nextwordmobile.viewModel.teacherViewModel.TeacherUpdateProfileViewModel
 import kotlin.jvm.java
@@ -55,6 +56,10 @@ fun TeacherDashboardScreen(
             }
             if (modelClass.isAssignableFrom(TeacherUpdateProfileViewModel::class.java)) {
                 return TeacherUpdateProfileViewModel(repo) as T
+            }
+            if (modelClass.isAssignableFrom(TeacherClassesViewModel::class.java)) {
+
+                return TeacherClassesViewModel(repo) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
@@ -111,8 +116,11 @@ fun TeacherDashboardScreen(
 
             // 3. CLASES
             composable(TeacherBottomNavItem.Clases.route) {
+                val teacherClassesViewModel: TeacherClassesViewModel = viewModel(factory = factory)
+
                 TeacherClassesScreen(
-                    paddingValues = paddingValues
+                    paddingValues = paddingValues,
+                    viewModel = teacherClassesViewModel
                 )
             }
 

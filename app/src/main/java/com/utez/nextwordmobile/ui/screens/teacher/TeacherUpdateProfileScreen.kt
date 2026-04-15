@@ -1,5 +1,6 @@
 package com.utez.nextwordmobile.ui.screens.teacher
 
+import android.R.attr.fontWeight
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -62,6 +64,11 @@ fun TeacherUpdateProfileScreen(
             certifications != initialCertifications
 
     val canSave = isFormValid && hasChanges && !isLoading
+    val inputStyle = TextStyle(
+        color = Color(0xFF111827),
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp
+    )
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -123,9 +130,10 @@ fun TeacherUpdateProfileScreen(
                     OutlinedTextField(
                         value = specialization,
                         onValueChange = { specialization = it },
-                        label = { Text("Especialidad (Ej. Inglés Básico, Conversación)") },
+                        label = { Text("Especialidad (Ej. Inglés Básico, Conversación)*") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        textStyle = inputStyle
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -139,7 +147,8 @@ fun TeacherUpdateProfileScreen(
                         label = { Text("Años de Experiencia*") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        textStyle = inputStyle
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -150,7 +159,8 @@ fun TeacherUpdateProfileScreen(
                         label = { Text("Certificaciones*") },
                         placeholder = { Text("Ej. TOEFL, Cambridge...") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        textStyle = inputStyle
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -158,11 +168,12 @@ fun TeacherUpdateProfileScreen(
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
-                        label = { Text("Descripción Profesional") },
+                        label = { Text("Descripción Profesional*") },
                         placeholder = { Text("Cuéntale a los alumnos sobre tu método de enseñanza...") },
                         modifier = Modifier.fillMaxWidth().height(120.dp),
                         shape = RoundedCornerShape(8.dp),
-                        maxLines = 4
+                        maxLines = 4,
+                        textStyle = inputStyle
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))

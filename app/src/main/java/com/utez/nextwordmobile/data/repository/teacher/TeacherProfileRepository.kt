@@ -16,4 +16,6 @@ class TeacherProfileRepository(private val api: TeacherApiService) {
 
     suspend fun updateTeacherProfile(dto: TeacherProfileUpdateDto) =
         api.updateTeacherProfile(dto)
+
+    suspend fun getTeacherAgenda() = api.getTeacherAgenda()
 }

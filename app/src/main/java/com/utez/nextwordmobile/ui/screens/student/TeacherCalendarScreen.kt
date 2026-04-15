@@ -1,5 +1,6 @@
 package com.utez.nextwordmobile.ui.screens.student
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -294,10 +295,8 @@ fun TeacherCalendarScreen(
                                 slotId = selectedSlotId!!,
                                 topic = classTopic,
                                 onSuccess = {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("¡Clase agendada con éxito!")
-                                        onReservationSuccess()
-                                    }
+                                    Toast.makeText(context, "¡Clase agendada con éxito!", Toast.LENGTH_SHORT).show()
+                                    onReservationSuccess()
                                 },
                                 onError = { errorMsg ->
                                     scope.launch { snackbarHostState.showSnackbar(errorMsg) }

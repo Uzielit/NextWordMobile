@@ -9,4 +9,6 @@ class StudentProfileRepository(private val apiService: StudentApiService) {
     suspend fun updateProfile(updateDto: StudentUpdateDto): Response<String> {
         return apiService.updateStudentProfile(updateDto)
     }
+
+    suspend fun claimPayment(paymentId: Long) = apiService.claimPayment(paymentId)
 }

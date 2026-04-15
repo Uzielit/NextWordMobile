@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -42,6 +43,8 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.input.KeyboardType
 import com.utez.nextwordmobile.ui.components.ReviewDialog
 
 import kotlinx.coroutines.launch
@@ -76,6 +79,7 @@ fun StudentHomeScreen(
     var selectedTeacher by remember { mutableStateOf<TeacherDto?>(null) }
     var showTeacherProfile by remember { mutableStateOf(false) }
     var showReservationDetails by remember { mutableStateOf(false) }
+    var showRechargeSheet by remember { mutableStateOf(false) }
 
     val nextClass = agendaList.firstOrNull()
     val hasUpcomingClass = nextClass != null
@@ -213,7 +217,9 @@ fun StudentHomeScreen(
                 StatCard(creditos.toString(), "Creditos\nDisponibles",
                     Icons.Default.AccountBalanceWallet,
                     Color(0xFF50E3C2),
-                    Modifier.weight(1f))
+                    Modifier
+                        .weight(1f)
+                        .clickable { showRechargeSheet = true })
                 StatCard(value = clasesTomadas.toString(),
                     label = "Capacitaciones\nTomadas",
                     icon = Icons.Default.Star,
@@ -421,6 +427,34 @@ fun StudentHomeScreen(
             }
         )
     }
+    var isClaiming by remember { mutableStateOf(false) }
+
+    if (showRechargeSheet) {
+        RechargeBottomSheet(
+            onDismiss = { showRechargeSheet = false },
+            isLoading = isClaiming,
+            onSubmitId = { transId ->
+                isClaiming = true
+                StudentProfileViewModel.claimPayment(
+                    paymentIdStr = transId,
+                    onSuccess = { msg ->
+                        isClaiming = false
+                        showRechargeSheet = false
+                        coroutineScope.launch {
+                            StudentProfileViewModel.fetchMyProfile(context)
+                            snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Short)
+                        }
+                    },
+                    onError = { errorMsg ->
+                        isClaiming = false
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(errorMsg, duration = SnackbarDuration.Long)
+                        }
+                    }
+                )
+            }
+        )
+    }
 }
 
 //Componente reutilizados
@@ -495,3 +529,84 @@ fun StudentHomeScreen(
             }
         }
     }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RechargeBottomSheet(
+    onDismiss: () -> Unit,
+    onSubmitId: (String) -> Unit,
+    isLoading: Boolean
+) {
+    var transactionId by remember { mutableStateOf("") }
+    val uriHandler = LocalUriHandler.current
+
+
+    val mercadoPagoLink = "https://link.mercadopago.com.mx/v1nextw"
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, bottom = 40.dp, top = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier.size(60.dp).background(Color(0xFFEAF3DE), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color(0xFF3B6D11), modifier = Modifier.size(30.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Recargar Monedero", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+            Text("Compra créditos para agendar tus capacitaciones.", fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // PASO 1: Pagar
+            Button(
+                onClick = { uriHandler.openUri(mercadoPagoLink) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009EE3)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("1. Ir a pagar a MercadoPago", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // PASO 2: Reclamar
+            Text("¿Ya pagaste?", fontWeight = FontWeight.Bold, color = Color.DarkGray, modifier = Modifier.align(Alignment.Start))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = transactionId,
+                onValueChange = { if (it.all { char -> char.isDigit() }) transactionId = it },
+                label = { Text("Ingresa el No. de Operación") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { onSubmitId(transactionId) },
+                enabled = transactionId.isNotBlank() && !isLoading,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("2. Reclamar Saldo", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}

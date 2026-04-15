@@ -5,7 +5,9 @@ import com.utez.nextwordmobile.data.remote.dto.studentDto.StudentUpdateDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 interface StudentApiService {
     @GET("api/students/me")
@@ -18,5 +20,10 @@ interface StudentApiService {
     suspend fun updateStudentProfile(
         @Body updateDto: StudentUpdateDto
     ): Response<String>
+
+    @POST("api/payments/claim-payment")
+    suspend fun claimPayment(
+        @Query("paymentId") paymentId: Long
+    ): Response<Map<String, String>>
 
 }

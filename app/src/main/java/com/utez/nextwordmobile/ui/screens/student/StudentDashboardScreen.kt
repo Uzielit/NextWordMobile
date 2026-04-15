@@ -116,6 +116,7 @@ fun StudentDashboardScreen(
                     StudentClassesScreen(
                         paddingValues = paddingValues,
                         viewModel = classesViewModel
+                        , studentId = studentProfile?.id ?: ""
                     )
                 }
 

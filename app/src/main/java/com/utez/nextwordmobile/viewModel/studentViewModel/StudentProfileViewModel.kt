@@ -16,6 +16,7 @@ import com.utez.nextwordmobile.data.repository.StudentProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import kotlin.jvm.java
 
 class StudentProfileViewModel (
@@ -114,6 +115,36 @@ class StudentProfileViewModel (
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun claimPayment(paymentIdStr: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        val paymentId = paymentIdStr.toLongOrNull()
+        if (paymentId == null) {
+            onError("Por favor ingresa un número de transacción válido.")
+            return
+        }
+        viewModelScope.launch {
+            try {
+
+                val response = profileRepository.claimPayment(paymentId)
+
+                if (response.isSuccessful) {
+                    val msg = response.body()?.get("message") ?: "¡Saldo recargado!"
+                    onSuccess(msg)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorMsg = try {
+                        val json = JSONObject(errorBody ?: "")
+                        json.optString("error", "Verifica tu número de transacción.")
+                    } catch (e: Exception) {
+                        "Verifica tu número de transacción."
+                    }
+                    onError(errorMsg)
+                }
+            } catch (e: Exception) {
+                onError("Error de red. Verifica tu internet.")
             }
         }
     }

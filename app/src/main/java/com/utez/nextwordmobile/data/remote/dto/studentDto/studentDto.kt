@@ -49,3 +49,9 @@ data class StudentUpdateDto(
     val tutorPhone: String?,
     val tutorEmail: String?
 )
+data class CancelClassRequestDto(
+    val reservationId: String,
+    val actionType: String = "STUDENT_CANCEL",
+    val reason: String,
+    val requesterId: String
+)

@@ -56,14 +56,14 @@ fun TeacherHomeScreen(
 
     val teacherProfile by viewModel.teacherProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    // val agendaList by viewModel.agendaList.collectAsState() // Lo usaremos después
+    val agendaList by viewModel.agendaList.collectAsState()
 
     val inboxList by inboxViewModel.inboxList.collectAsState()
 
     val nombreProfesor = teacherProfile?.fullName ?: "Cargando..."
     val primerNombre = nombreProfesor.substringBefore(" ")
     val valoracion = teacherProfile?.averageRating ?: 0.0
-    val clasesHoyCount = 0
+    val clasesHoyCount = agendaList.size
 
     var showProfileDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -77,7 +77,7 @@ fun TeacherHomeScreen(
             coroutineScope.launch {
 
                  viewModel.fetchMyProfile(context)
-                //viewModel.fetchMyAgenda(context)
+                viewModel.fetchMyAgenda(context)
                 inboxViewModel.fetchInbox()
                 delay(800)
                 isRefreshing = false
@@ -89,7 +89,7 @@ fun TeacherHomeScreen(
     LaunchedEffect(Unit) {
        viewModel.fetchMyProfile(context)
         inboxViewModel.fetchInbox()
-        // viewModel.fetchMyAgenda(context)
+        viewModel.fetchMyAgenda(context)
     }
 
     Box(
@@ -188,7 +188,7 @@ fun TeacherHomeScreen(
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    value = if (valoracion > 0.0) valoracion.toString() else "Nuevo", // 🌟 Si es nuevo, dice "Nuevo" en vez de 0.0
+                    value = if (valoracion > 0.0) valoracion.toString() else "Nuevo",
                     label = "Mi\nValoración",
                     icon = Icons.Default.Star,
                     iconColor = Color(0xFFFFB400),
@@ -212,11 +212,15 @@ fun TeacherHomeScreen(
 
             // 🌟 RENDERIZADO CONDICIONAL DE CLASES REALES
             if (clasesHoyCount > 0) {
-                // Aquí deberías hacer un forEach de tu `agendaList`
-                /* agendaList.forEach { clase ->
-                    TeacherClassCard(...)
-                } */
-            } else {
+                agendaList.take(3).forEach { clase ->
+                    TeacherClassCard(
+                        studentName = clase.studentName,
+                        time = "${clase.date} • ${clase.startTime}",
+                        duration = "Clase de 1h",
+                        status = clase.status
+                    )
+                }
+            } else{
                 // Estado vacío: Sin clases
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),

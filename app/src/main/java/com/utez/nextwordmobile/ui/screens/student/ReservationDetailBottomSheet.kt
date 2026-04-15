@@ -92,11 +92,11 @@ fun ReservationDetailBottomSheet(
             // Botón para unirse a Google Meet
             Button(
                 onClick = {
-                    val url = reservation.meetLink
-                    if (!url.isNullOrBlank()) {
-                        // Si falta el https:// se lo agregamos por seguridad
-                        val finalUrl = if (!url.startsWith("http")) "https://$url" else url
-                        uriHandler.openUri(finalUrl)
+                    val linkReal = reservation.meetLink
+                    if (!linkReal.isNullOrBlank()) {
+                        uriHandler.openUri(linkReal)
+                    } else {
+                        uriHandler.openUri("https://meet.google.com/")
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),

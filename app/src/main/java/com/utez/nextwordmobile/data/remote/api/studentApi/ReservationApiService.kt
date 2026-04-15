@@ -1,9 +1,11 @@
 package com.utez.nextwordmobile.data.remote.api.studentApi
 
 import com.utez.nextwordmobile.data.remote.dto.ReviewRequestDto
+import com.utez.nextwordmobile.data.remote.dto.studentDto.CancelClassRequestDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationResponseDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.SlotResponseDto
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -22,7 +24,7 @@ interface ReservationApiService {
     @POST("api/reservations/book")
     suspend fun bookSlot(
         @Body request: ReservationDto
-    ): Response<String>
+    ): Response<ResponseBody>
 
     // ENDPOINT DE PRÓXIMAS CLASES
     @GET("api/reservations/myAgenda")
@@ -37,5 +39,10 @@ interface ReservationApiService {
 
     @POST("api/reviews")
     suspend fun leaveReview(@Body request: ReviewRequestDto): Response<String>
+
+    @POST("api/reservations/cancel")
+    suspend fun cancelClass(
+        @Body request: CancelClassRequestDto
+    ): Response<ResponseBody>
 
 }

@@ -2,9 +2,11 @@ package com.utez.nextwordmobile.data.repository
 
 import com.utez.nextwordmobile.data.remote.api.studentApi.ReservationApiService
 import com.utez.nextwordmobile.data.remote.dto.ReviewRequestDto
+import com.utez.nextwordmobile.data.remote.dto.studentDto.CancelClassRequestDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.ReservationResponseDto
 import com.utez.nextwordmobile.data.remote.dto.studentDto.SlotResponseDto
+import okhttp3.ResponseBody
 import retrofit2.Response
 
 class ReservationRepository( private val apiService : ReservationApiService) {
@@ -13,7 +15,7 @@ class ReservationRepository( private val apiService : ReservationApiService) {
         return apiService.getAvailableSlots(startDate, endDate, teacherId)
     }
 
-    suspend fun bookSlot(request: ReservationDto): Response<String> {
+    suspend fun bookSlot(request: ReservationDto): Response<ResponseBody> {
         return apiService.bookSlot(request)
     }
 
@@ -23,5 +25,9 @@ class ReservationRepository( private val apiService : ReservationApiService) {
 
 
     suspend fun leaveReview(request: ReviewRequestDto) = apiService.leaveReview(request)
+
+    suspend fun cancelClass(request: CancelClassRequestDto): Response<ResponseBody> {
+        return apiService.cancelClass(request)
+    }
 
 }
